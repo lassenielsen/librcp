@@ -1,0 +1,16 @@
+# A small ttd (Token- and Type-Definitions) file defining a sequence of pairs
+
+# TOKENS
+lit := "[^01()+*\\]|[\\]0|[\\]1|[\\]\(|[\\]\)|[\\]\+|[\\]\*|[\\][\\]"
+0   := "0"
+1   := "1"
+(   := "\("
+)   := "\)"
++   := "\+"
+*   := "\*"
+
+# TYPES
+re  ::= re2 + re | re2
+re2 ::= re3 re2  | re3
+re3 ::= re3 *    | re4
+re4 ::= 0 | 1    | lit | ( re )
