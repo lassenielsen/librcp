@@ -93,16 +93,13 @@ uninstall:
 #OS_LINUX	ldconfig -n /usr/lib
 
 clean:
-	touch clean~
 	touch packages
 	touch debs
-	touch objects/clean.o
 	touch include/$(name)/config.hpp
 	touch $(libname)$(libversion)
-	rm *~
 	rm -Rf packages
 	rm -Rf debs
-	rm objects/*.o
+	rm -Rf objects
 	rm include/$(name)/config.hpp
 	rm $(libname)$(libversion)
 	cp Makefile.in Makefile
@@ -156,5 +153,6 @@ $(libname)$(libversion): $(library_objects)
 #OS_MAC	$(compiler) -dynamiclib -o $(libname) $(library_objects) $(libs)
 
 objects/%.o: source/%.cpp include/$(name)/*.hpp  include/$(name)/config.hpp
+	mkdir -p objects
 	$(compiler) -c source/$*.cpp $(args) -o objects/$*.o
 
