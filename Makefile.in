@@ -11,11 +11,11 @@
 # - Lasse Nielsen.                                                    #
 #=====================================================================#
 name = rcp
-version = 1.1.0
+version = 1.2.0
 libname = lib$(name).so
 #OS_LINUXlibname = lib$(name).so
 #OS_MAClibname = lib$(name).dylib
-#OS_LINUXlibversion = .1.1.0
+#OS_LINUXlibversion = .$(version)
 #OS_MAClibversion =
 COMMENT = OS_
 OS_AUTO = $(shell uname -s)
@@ -105,7 +105,8 @@ clean:
 	cp Makefile.in Makefile
 
 package:
-	svn export . ./$(name)-$(version)
+	git clone . ./$(name)-$(version)
+	rm -Rf ./$(name)-$(version)/.git
 	mkdir -p packages/
 	tar -czf packages/$(name)-$(version).tgz $(name)-$(version)
 	rm -Rf $(name)-$(version)
@@ -119,7 +120,7 @@ deb: $(libname)$(libversion)
 	mkdir -p debs/lib$(name)_$(version)_i386/usr/lib
 	cp $(libname)$(libversion) debs/lib$(name)_$(version)_i386/usr/lib/
 	mkdir -p debs/lib$(name)_$(version)_i386/usr/include
-	svn export include/$(name) debs/lib$(name)_$(version)_i386/usr/include/$(name)
+	cp -R include/$(name) debs/lib$(name)_$(version)_i386/usr/include/$(name)
 	echo "Making control"
 	mkdir -p debs/lib$(name)_$(version)_i386/DEBIAN
 	echo "Package: librcp"                                         > debs/lib$(name)_$(version)_i386/DEBIAN/control
