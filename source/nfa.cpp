@@ -398,6 +398,13 @@ void NFA::MakeCompact() // {{{
   // Use updated NFA
   myNodes = newNodes;
 } // }}}
+int find_group(vector<vector<int> > &groups, int node) // {{{
+{ for (int i=0; i<groups.size(); ++i)
+  for (int j=0; j<groups[i].size(); ++j)
+    if (node==groups[i][j])
+      return i;
+  throw (string)"Error: Node " + node + " not in any group";
+} // }}}
 void NFA::Reduce() // {{{
 { vector<vector<int> > groups;
   { vector<int> q1; // non-final nodes
@@ -412,11 +419,55 @@ void NFA::Reduce() // {{{
     groups.push_back(q2);
   }
   bool done=false;
-  while(!done)
+  while(!done) // Continue until the groups are consistent
   { done = true;
-    map<pair<int,string>,pair<int,string> > nodeMap; // node,output->group,input
-    for (int group=0; group<groups.size(); ++group)
-    { for 
+    for (int group=0; group<groups.size(); ++group) // Check consistency of each group
+    { vector<vector<int> > subgroups; // Create maximal consistent subgroups
+      for (int node=0; node<groups[group].size(); ++node)
+      { bool foundgroup=false;
+        for (int subgroup=0; !foundgroup && subgroup<subgroups.size(); ++subgroup)
+        { bool match=true;
+          // Check that each transitions are in the group
+          for (int tr_n=0; tr_n<myNodes[groups[group][node]].CountTransitions(); ++tr_n)
+          { bool match_edge=false;
+            for (int tr_g=0; !match_edge && tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++re_g)
+              if (myNodes[groups[group][node]].GetTransition(tr_n).GetInput()                   == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetInput() &&
+                  myNodes[groups[group][node]].GetTransition(tr_n).GetOutput()                  == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetOutput() &&
+                  find_group(groups,myNodes[groups[group][node]].GetTransition(tr_n).GetDest()) == find_group(groups,myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetDest()))
+                match_edge=true;
+            if (!match_edge)
+              match=false;
+          }
+          // Check that each transitions are in the node
+          for (int tr_g=0; tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++re_g)
+          { bool match_edge=false;
+            for (int tr_n=0; !match_edge && tr_n<myNodes[groups[group][node]].CountTransitions(); ++tr_n)
+              if (myNodes[groups[group][node]].GetTransition(tr_n).GetInput()                   == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetInput() &&
+                  myNodes[groups[group][node]].GetTransition(tr_n).GetOutput()                  == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetOutput() &&
+                  find_group(groups,myNodes[groups[group][node]].GetTransition(tr_n).GetDest()) == find_group(groups,myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetDest()))
+                match_edge=true;
+            if (!match_edge)
+              match=false;
+          }
+          if (match) // add node to subgroup
+          { foundgroup=true;
+            subgroups[subgroup].push_back(groups[group][node]);
+          }
+        }
+        if (!foundgroup)
+        { vector<int> newsubgroup;
+          newsubgroup.push_back(groups[group][node]);
+          subgroups.push_back(newsubgroup);
+        }
+      }
+      // Check if group was consistent
+      if (subgroups.size()>1) // if not, replace group by subgroups
+      { done=false;
+        groups.erase(groups.begin()+group);
+        for (int i=0; i<subgroups.size(); ++i)
+          groups.push_back(subgroup[i]);
+        --group;
+      }
     }
   }
   // FIXME: Move group with 0 to front
