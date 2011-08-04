@@ -260,3 +260,171 @@ int NFA::Create(const RE &exp, int start) // {{{
     return nodeid;
   }
 } // }}}
+void NFA::RemoveDeadStates() // {{{
+{ map<int,int> newIndex;
+  // Initially mark all nodes as dead (-1 for dead, 0 for alive)
+  for (int i=0; i<myNodes.size(); ++i)
+    newIndex[i]=-1;
+  // Recursively mark all final nodes or nodes with an edge to a live node as live
+  bool isDone=false;
+  while (!isDone)
+  { isDone = true;
+    for (int i=0; i<myNodes.size(); ++i)
+    { if (newIndex[i]<0)
+      { if (myNodes[i].Final())
+        { newIndex[i]=0;
+          isDone=false;
+        }
+        else
+        { for (int j=0; j<myNodes[i].CountTransitions(); ++j)
+          { if (newIndex[myNodes[i].GetTransition(j).GetDest()]>=0)
+            { newIndex[i]=0;
+              isDone=false;
+            }
+          }
+        }
+      }
+    }
+  }
+  // Always keep initial node
+  newIndex[0]=0;
+  int maxIndex=0;
+  // Assign new indexes incrementally
+  for (int i=1; i<myNodes.size(); ++i)
+    if (newIndex[i]>=0)
+      newIndex[i]=++maxIndex;
+  // Make new NFA
+  vector<NFANode> newNodes;
+  for (int i=0; i<myNodes.size(); ++i)
+  { if (newIndex[i]>=0)
+    { // Create new node
+      NFANode newNode;
+      if (myNodes[i].Final())
+        newNode.SetFinal(true);
+      // Add edges to the new node
+      for (int j=0; j<myNodes[i].CountTransitions(); ++j)
+        if (newIndex[myNodes[i].GetTransition(j).GetDest()]>=0)
+          newNode.AddTransition(
+            NFATransition(newIndex[myNodes[i].GetTransition(j).GetDest()],
+                          myNodes[i].GetTransition(j).GetInput(),
+                          myNodes[i].GetTransition(j).GetOutput()));
+      newNodes.push_back(newNode);
+    }
+  }
+  // Use the updated NFA
+  myNodes=newNodes;
+} // }}}
+void NFA::RemoveUnreachableStates() // {{{
+{ map<int,int> newIndex;
+  // Initially mark only the initial node as reachable (-1 for unreachable, 1 for reachable)
+  newIndex[0]=0;
+  for (int i=1; i<myNodes.size(); ++i)
+    newIndex[i]=-1;
+  // Recursively mark all final nodes or nodes with an edge to a live node as live
+  bool isDone=false;
+  while (!isDone)
+  { isDone = true;
+    for (int i=0; i<myNodes.size(); ++i)
+    { if (newIndex[i]>=0)
+      { for (int j=0; j<myNodes[i].CountTransitions(); ++j)
+        { if (newIndex[myNodes[i].GetTransition(j).GetDest()]<0)
+          { newIndex[myNodes[i].GetTransition(j).GetDest()]=0;
+            isDone=false;
+          }
+        }
+      }
+    }
+  }
+  int maxIndex=0;
+  // Assign new indexes incrementally
+  for (int i=1; i<myNodes.size(); ++i)
+    if (newIndex[i]>=0)
+      newIndex[i]=++maxIndex;
+  // Make new NFA
+  vector<NFANode> newNodes;
+  for (int i=0; i<myNodes.size(); ++i)
+  { if (newIndex[i]>=0)
+    { // Create new node
+      NFANode newNode;
+      if (myNodes[i].Final())
+        newNode.SetFinal(true);
+      // Add edges to the new node
+      for (int j=0; j<myNodes[i].CountTransitions(); ++j)
+        if (newIndex[myNodes[i].GetTransition(j).GetDest()]>=0)
+          newNode.AddTransition(
+            NFATransition(newIndex[myNodes[i].GetTransition(j).GetDest()],
+                          myNodes[i].GetTransition(j).GetInput(),
+                          myNodes[i].GetTransition(j).GetOutput()));
+      newNodes.push_back(newNode);
+    }
+  }
+  // Use the updated NFA
+  myNodes=newNodes;
+} // }}}
+vector<NFATransition> NFA::CompactEdges(const NFATransition &edge) // {{{
+{ vector<NFATransition> result;
+  for (int j=0; j<myNodes[edge.GetDest()].CountTransitions(); ++j)
+  { // Use all non-outputting continuations (recursively)
+    if (myNodes[edge.GetDest()].GetTransition(j).GetOutput()=="")
+    { vector<NFATransition> edges=CompactEdges(
+        NFATransition(myNodes[edge.GetDest()].GetTransition(j).GetDest(),
+                      edge.GetInput()+myNodes[edge.GetDest()].GetTransition(j).GetInput(),
+                      edge.GetOutput()));
+      result.insert(result.end(),edges.begin(),edges.end());
+    }
+  }
+  // If edge cannot be continued, use original edge
+  if (result.size()==0)
+    result.push_back(edge);
+  return result;
+} // }}}
+void NFA::MakeCompact() // {{{
+{ vector<NFANode> newNodes;
+  // Iterate through each transition from each node
+  for (int i=0; i<myNodes.size(); ++i)
+  { // Create new node
+    NFANode newNode;
+    if (myNodes[i].Final())
+      newNode.SetFinal(true);
+    for (int j=0; j<myNodes[i].CountTransitions(); ++j)
+    { // Make all continuation for each edge
+      vector<NFATransition> cEdges = CompactEdges(myNodes[i].GetTransition(j));
+      for (vector<NFATransition>::const_iterator cEdge=cEdges.begin();
+           cEdge!=cEdges.end(); ++cEdge)
+        newNode.AddTransition(*cEdge);
+    }
+    newNodes.push_back(newNode);
+  }
+  // Use updated NFA
+  myNodes = newNodes;
+} // }}}
+void NFA::Reduce() // {{{
+{ vector<vector<int> > groups;
+  { vector<int> q1; // non-final nodes
+    vector<int> q2; // final nodes
+    for (int i=0; i<myNodes.size(); ++i)
+    { if (myNodes[i].final())
+        q2.push_back(i);
+      else
+        q1.push_back(i);
+    }
+    groups.push_back(q1);
+    groups.push_back(q2);
+  }
+  bool done=false;
+  while(!done)
+  { done = true;
+    map<pair<int,string>,pair<int,string> > nodeMap; // node,output->group,input
+    for (int group=0; group<groups.size(); ++group)
+    { for 
+    }
+  }
+  // FIXME: Move group with 0 to front
+  // Store translation
+  map<int,int> newIndex;
+  for (int group=0; group<groups.size(); ++group)
+    for (int node=0; node<groups[group].size(); ++node)
+      newIndex[groups[group][node] ]=group;
+
+
+} // }}}

@@ -73,10 +73,17 @@ class NFA // {{{
     // ToString prints the NFA in the dot format for easy debugging
     std::string ToString();
 
+    // Methods for the out-deterministic NFA reduction algorithm
+    void RemoveDeadStates();
+    void RemoveUnreachableStates();
+    void MakeCompact();
+    void Reduce();
+
 
   private:
     bool Accept(const std::string &s, int pos, std::set<int> marked) const;
     bool Compress(const std::string &s, int pos, std::string &dest, std::set<int> marked) const;
+    std::vector<NFATransition> CompactEdges(const NFATransition &edge);
     // Create constructs NFA nodes representing exp, starting at the start
     // node. The return value contains the final node. 
     int Create(const RE &exp, int start);

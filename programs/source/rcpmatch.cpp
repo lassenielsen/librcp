@@ -302,6 +302,40 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
+  if (re_method=="nfa_reduce") // {{{
+  { double c_1=gettime();
+    NFA nfa(*re);
+    nfa.RemoveDeadStates();
+    nfa.MakeCompact();
+    nfa.RemoveUnreachableStates();
+    double c_2=gettime();
+    if (re_cmd=="print")
+    { cout << nfa.ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="accept")
+    { cout << nfa.Accept(re_str) << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress")
+    { cout << nfa.Compress(re_str) << endl;
+      return 0;
+    }
+    else if (re_cmd=="time")
+    { double t_1=gettime();
+      nfa.Compress(re_str);
+      double t_2=gettime();
+      if (n>=0)
+        cout << n << " ";
+      cout.precision(10);
+      cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else
+    { cout << "Unknown NFA command: " << re_cmd << endl;
+      return 0;
+    }
+  } // }}}
   else if (re_method=="dfa") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
