@@ -39,6 +39,7 @@ class NFANode // {{{
     bool Final() const;
     void SetFinal(bool final);
     void AddTransition(const NFATransition &trans);
+    void RemoveTransition(int id);
     int CountTransitions() const;
     const NFATransition &GetTransition(int id) const;
 
@@ -78,6 +79,7 @@ class NFA // {{{
     void RemoveUnreachableStates();
     void MakeCompact();
     void Reduce();
+    void Explode();
 
 
   private:

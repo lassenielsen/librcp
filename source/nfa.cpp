@@ -54,6 +54,10 @@ void NFANode::AddTransition(const NFATransition &trans) // {{{
   else
     myTransitions.insert(it,trans);
 } // }}}
+void NFANode::RemoveTransition(int id) // {{{
+{
+  myTransitions.erase(myTransitions.begin()+id);
+} // }}}
 int NFANode::CountTransitions() const // {{{
 {
   return myTransitions.size();
@@ -492,4 +496,32 @@ void NFA::Reduce() // {{{
   }
   // Use reduced NFA
   myNodes=newNodes;
+} // }}}
+void NFA::Explode() // {{{
+{ for (int node=0; node<myNodes.size(); ++node) // For each edge in each node
+    for (int edge=0; edge<myNodes[node].CountTransitions(); ++edge)
+    { if (myNodes[node].GetTransition(edge).GetInput().size()>1) // split transition
+      { int dest = myNodes[node].GetTransition(edge).GetDest();
+        string input = myNodes[node].GetTransition(edge).GetInput();
+        string output = myNodes[node].GetTransition(edge).GetOutput();
+        // Remove original edge
+        myNodes[node].RemoveTransition(edge);
+        --edge;
+        // Replace with sequence of edges
+        int e_source=node;
+        for (int c=0; c<input.size(); ++c)
+        { int e_dest=dest;
+          string e_output="";
+          if (c<input.size()-1)
+          { myNodes.push_back(NFANode());
+            e_dest=myNodes.size()-1;
+          }
+          if (c==0)
+            e_output=output;
+          string e_input=(string)""+input[c];
+          myNodes[e_source].AddTransition(NFATransition(e_dest,e_input,e_output));
+          e_source=e_dest;
+        }
+      }
+    }
 } // }}}
