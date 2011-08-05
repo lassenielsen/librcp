@@ -403,14 +403,14 @@ int find_group(vector<vector<int> > &groups, int node) // {{{
   for (int j=0; j<groups[i].size(); ++j)
     if (node==groups[i][j])
       return i;
-  throw (string)"Error: Node " + node + " not in any group";
+  throw (string)"Error: Node not in any group";
 } // }}}
 void NFA::Reduce() // {{{
 { vector<vector<int> > groups;
   { vector<int> q1; // non-final nodes
     vector<int> q2; // final nodes
     for (int i=0; i<myNodes.size(); ++i)
-    { if (myNodes[i].final())
+    { if (myNodes[i].Final())
         q2.push_back(i);
       else
         q1.push_back(i);
@@ -430,7 +430,7 @@ void NFA::Reduce() // {{{
           // Check that each transitions are in the group
           for (int tr_n=0; tr_n<myNodes[groups[group][node]].CountTransitions(); ++tr_n)
           { bool match_edge=false;
-            for (int tr_g=0; !match_edge && tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++re_g)
+            for (int tr_g=0; !match_edge && tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++tr_g)
               if (myNodes[groups[group][node]].GetTransition(tr_n).GetInput()                   == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetInput() &&
                   myNodes[groups[group][node]].GetTransition(tr_n).GetOutput()                  == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetOutput() &&
                   find_group(groups,myNodes[groups[group][node]].GetTransition(tr_n).GetDest()) == find_group(groups,myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetDest()))
@@ -439,7 +439,7 @@ void NFA::Reduce() // {{{
               match=false;
           }
           // Check that each transitions are in the node
-          for (int tr_g=0; tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++re_g)
+          for (int tr_g=0; tr_g<myNodes[subgroups[subgroup][0]].CountTransitions(); ++tr_g)
           { bool match_edge=false;
             for (int tr_n=0; !match_edge && tr_n<myNodes[groups[group][node]].CountTransitions(); ++tr_n)
               if (myNodes[groups[group][node]].GetTransition(tr_n).GetInput()                   == myNodes[subgroups[subgroup][0]].GetTransition(tr_g).GetInput() &&
@@ -465,17 +465,31 @@ void NFA::Reduce() // {{{
       { done=false;
         groups.erase(groups.begin()+group);
         for (int i=0; i<subgroups.size(); ++i)
-          groups.push_back(subgroup[i]);
+          groups.push_back(subgroups[i]);
         --group;
       }
     }
   }
-  // FIXME: Move group with 0 to front
-  // Store translation
-  map<int,int> newIndex;
+  // Move group with 0 to front
+  int init_group_id = find_group(groups,0);
+  vector<int> init_group=groups[init_group_id];
+  groups.erase(groups.begin()+init_group_id);
+  groups.insert(groups.begin(),init_group);
+  // Merge groups
+  vector<NFANode> newNodes;
   for (int group=0; group<groups.size(); ++group)
-    for (int node=0; node<groups[group].size(); ++node)
-      newIndex[groups[group][node] ]=group;
-
-
+  { NFANode newNode;
+    // Set final if group is final
+    if (myNodes[groups[group][0]].Final())
+      newNode.SetFinal(true);
+    // Add (translated) edges
+    for (int edge=0; edge<myNodes[groups[group][0]].CountTransitions(); ++edge)
+      newNode.AddTransition(NFATransition(
+        find_group(groups,myNodes[groups[group][0]].GetTransition(edge).GetDest()),
+        myNodes[groups[group][0]].GetTransition(edge).GetInput(),
+        myNodes[groups[group][0]].GetTransition(edge).GetOutput()));
+    newNodes.push_back(newNode);
+  }
+  // Use reduced NFA
+  myNodes=newNodes;
 } // }}}

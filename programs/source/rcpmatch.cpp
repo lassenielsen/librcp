@@ -308,6 +308,7 @@ int main(int argc, char **argv)
     nfa.RemoveDeadStates();
     nfa.MakeCompact();
     nfa.RemoveUnreachableStates();
+    nfa.Reduce();
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
