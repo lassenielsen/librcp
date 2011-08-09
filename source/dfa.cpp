@@ -178,6 +178,9 @@ int DFA::AddNode(const set<int> &nfanodes) // {{{
       myNodes.back().SetFinal(*nfanode);
   return myNodes.size()-1;
 } // }}}
+int DFA::CountNodes() // {{{
+{ return myNodes.size();
+} // }}}
 bool DFA::Accept(const string &s) // {{{
 {
   int node=0; // We start in node 0

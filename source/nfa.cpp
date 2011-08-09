@@ -81,6 +81,9 @@ int NFA::AddNode() // {{{
   myNodes.push_back(NFANode());
   return myNodes.size()-1;
 } // }}}
+int NFA::CountNodes() // {{{
+{ return myNodes.size();
+} // }}}
 const NFANode &NFA::GetNode(int i) const // {{{
 {
   return myNodes[i];

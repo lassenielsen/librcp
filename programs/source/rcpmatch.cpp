@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   { re_method=argv[1];
   }
   if (re_method=="help")
-  { cout << "Syntax: " << argv[0] << " [help|re|nfa|dfa|dfasim|frca|debug] [print|accept|decompress|compress|compile|time|timems] [<exp> [<str>]]" << endl;
+  { cout << "Syntax: " << argv[0] << " [help|re|nfa|nfa_reduce|dfa|dfa_reduce|dfasim|dfasim_reduce|frca|debug] [print|accept|decompress|compress|compile|time|timems|size] [<exp> [<str>]]" << endl;
     return 0;
   }
   string re_cmd="frca";
@@ -297,8 +297,8 @@ int main(int argc, char **argv)
       cout << c_2-c_1+t_2-t_1 << endl;
       return 0;
     }
-    else
-    { cout << "Unknown NFA command: " << re_cmd << endl;
+    else if (re_cmd=="size")
+    { cout << "NFA Nodes: " << nfa.CountNodes() << endl;
       return 0;
     }
   } // }}}
@@ -331,6 +331,10 @@ int main(int argc, char **argv)
         cout << n << " ";
       cout.precision(10);
       cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else if (re_cmd=="size")
+    { cout << "NFA Nodes: " << nfa.CountNodes() << endl;
       return 0;
     }
     else
@@ -377,6 +381,10 @@ int main(int argc, char **argv)
         cout << n << " ";
       cout.precision(10);
       cout << t_2-t_1 << endl;
+      return 0;
+    }
+    else if (re_cmd=="size")
+    { cout << "DFA Nodes: " << dfa.CountNodes() << endl;
       return 0;
     }
     else
@@ -428,6 +436,10 @@ int main(int argc, char **argv)
         cout << n << " ";
       cout.precision(10);
       cout << t_2-t_1 << endl;
+      return 0;
+    }
+    else if (re_cmd=="size")
+    { cout << "DFA Nodes: " << dfa.CountNodes() << endl;
       return 0;
     }
     else

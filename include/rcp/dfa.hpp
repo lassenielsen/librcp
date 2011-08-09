@@ -65,6 +65,7 @@ class DFA // {{{
 
     // AddNode adds a node to the DFA, and returns the id of the node
     int AddNode(const std::set<int> &nfanodes);
+    int CountNodes();
     // Accept checks if a string is accepted by the NFA
     bool Accept(const std::string &s);
     // Compress returns a compact bit-representation of the given string, and

@@ -57,6 +57,7 @@ class NFA // {{{
 
     // AddNode adds a node to the NFA, and returns the id of the node
     int AddNode();
+    int CountNodes();
     const NFANode &GetNode(int i) const;
     // Deterministic checks if there is a node with conflicting edges
     bool Deterministic() const;
@@ -80,7 +81,6 @@ class NFA // {{{
     void MakeCompact();
     void Reduce();
     void Explode();
-
 
   private:
     bool Accept(const std::string &s, int pos, std::set<int> marked) const;
