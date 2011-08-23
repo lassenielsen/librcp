@@ -529,30 +529,77 @@ void NFA::Explode() // {{{
     }
 } // }}}
 vector<string> NFA::FindPrefixes() // {{{
-{ vector<string> results;
-  for (int node=0; node<myNodes.size(); ++nodes)
+{ // For each node, find the longest common prefix from each path from the note to a final node
+  vector<string> results;
+  // Create initial (empty) prefixes
+  for (int node=0; node<myNodes.size(); ++node)
     results.push_back("");
+  // Loop while the prefixes increase
   bool updated=true;
   while (updated)
-  { updated = false;
+  { // No updates at the beginning of loop
+    updated = false;
+    // Update prefix for each node
     for (int node=0; node<myNodes.size(); ++node)
-    { vector<string> continuations;
+    { if (myNodes[node].Final())
+        continue;
+      vector<string> continuations;
+      // Find possible continuations from node
       for (int edge=0; edge<myNodes[node].CountTransitions(); ++edge)
+      {
         continuations.push_back(myNodes[node].GetTransition(edge).GetInput()
-        + results[myNodes[node].GetTransision(edge).GetDest()]);
+        + results[myNodes[node].GetTransition(edge).GetDest()]);
+      }
+      // Start check prefix from position of last prefix
       int pos = results[node].size();
       bool equal=true;
       while (equal)
-      { if (continuations.size()>0)
-        { char next=continuations[0][pos];
+      { // Only has prefix if it has continuations
+        if (continuations.size()>0 && continuations[0].size()>pos)
+        { // Use the first continuation as reference for prefix
+          char nextch=continuations[0][pos];
+          // Check that all other continuations has same prefix
           for (int i=1; i<continuations.size(); ++i)
-          { if (nextch!=continuations[i][pos])
+          { if (continuations[i].size()<=pos || nextch!=continuations[i][pos])
               equal=false;
           }
+          //
+          if (equal) // We have found an update
+          { updated=true;
+            ++pos;
+          }
+        }
         else equal=false;
-        if (equal)
-          ++pos;
       }
+      // Update prefix of node
+      if (continuations.size()>0)
+        results[node]=continuations[0].substr(0,pos);
     }
   }
+  return results;
+} // }}}
+void NFA::MakePrefix() // {{{
+{ // Find the prefix for each node 
+  vector<string> prefixes=FindPrefixes();
+  vector<NFANode> newNodes;
+  // Create new initial node
+  newNodes.push_back(NFANode());
+  newNodes[0].AddTransition(NFATransition(1,prefixes[0],""));
+  for (int node=0; node<myNodes.size(); ++node)
+  { // Copy nodes from original transducer
+    newNodes.push_back(NFANode());
+    if (myNodes[node].Final())
+      newNodes[node+1].SetFinal(true);
+    for (int edge=0; edge<myNodes[node].CountTransitions(); ++edge)
+    { // Add transformed edges
+      string input = myNodes[node].GetTransition(edge).GetInput()
+                   + prefixes[myNodes[node].GetTransition(edge).GetDest()];
+      input=input.substr(prefixes[node].size()); // Remove prefix of source node
+      newNodes[node+1].AddTransition(NFATransition(myNodes[node].GetTransition(edge).GetDest()+1,
+                                                   input,
+                                                   myNodes[node].GetTransition(edge).GetOutput()));
+    }
+  }
+  // Use result
+  myNodes=newNodes;
 } // }}}
