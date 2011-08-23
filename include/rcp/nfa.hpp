@@ -81,6 +81,9 @@ class NFA // {{{
     void MakeCompact();
     void Reduce();
     void Explode();
+    // FindPrefixes requires no dead states. Otherwise it may not terminate
+    std::vector<std::string> FindPrefixes();
+    void MakePrefix();
 
   private:
     bool Accept(const std::string &s, int pos, std::set<int> marked) const;

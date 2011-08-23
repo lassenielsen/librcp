@@ -528,3 +528,31 @@ void NFA::Explode() // {{{
       }
     }
 } // }}}
+vector<string> NFA::FindPrefixes() // {{{
+{ vector<string> results;
+  for (int node=0; node<myNodes.size(); ++nodes)
+    results.push_back("");
+  bool updated=true;
+  while (updated)
+  { updated = false;
+    for (int node=0; node<myNodes.size(); ++node)
+    { vector<string> continuations;
+      for (int edge=0; edge<myNodes[node].CountTransitions(); ++edge)
+        continuations.push_back(myNodes[node].GetTransition(edge).GetInput()
+        + results[myNodes[node].GetTransision(edge).GetDest()]);
+      int pos = results[node].size();
+      bool equal=true;
+      while (equal)
+      { if (continuations.size()>0)
+        { char next=continuations[0][pos];
+          for (int i=1; i<continuations.size(); ++i)
+          { if (nextch!=continuations[i][pos])
+              equal=false;
+          }
+        else equal=false;
+        if (equal)
+          ++pos;
+      }
+    }
+  }
+} // }}}
