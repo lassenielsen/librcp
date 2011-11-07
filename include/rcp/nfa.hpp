@@ -66,6 +66,9 @@ class NFA // {{{
     // Compress returns a compact bit-representation of the given string, and
     // throws a string error if the given string is not accepted
     std::string Compress(const std::string &s) const;
+    // Thompson simulation based parsing
+    // Not as efficient as DFASIM, but ensures greedy, leeftmost match
+    std::pair<unsigned int, std::vector<char> > ThompsonGL(const std::string &s) const;
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s) const;

@@ -200,6 +200,50 @@ void NFA::Closure(std::map<int,std::pair<std::string,int> > &nodes) const // {{{
   }
   return;
 } // }}}
+class path
+{ public:
+    path() {bits = 0;}
+
+    unsigned bits;
+    vector<char> data;
+};
+typedef map<int,path> state;
+pair<unsigned int, vector<char> > NFA::ThompsonGL(const string &s) const // {{{
+{
+  state cur_state;
+  cur_state[0]=path();
+  // Perform epsilon-closure
+  for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
+  { // Find direct edges
+    state next_state;
+    for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
+    { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
+      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 &&
+            GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
+        { if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end())
+          { // Set State
+            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=node->second;
+            for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
+            { // Add extra bits
+              if (next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits%8 == 0)
+                next_state[GetNode(node->first).GetTransition(edge).GetDest()].data.push_back('\0');
+              next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits++;
+              next_state[GetNode(node->first).GetTransition(edge).GetDest()].data.back() &= (1<<next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits);
+            }
+          }
+        }
+      }
+    }
+    // Perform epsilon-closure
+
+    cur_state=next_state;
+  }
+
+  for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
+    if (GetNode(node->first).Final())
+      return pair<unsigned int, vector<char> >(node->second.bits,node->second.data);
+  throw (string)"Error: No Match";
+} // }}}
 string NFA::ToString() // {{{
 {
   stringstream result;

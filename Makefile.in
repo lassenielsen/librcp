@@ -11,7 +11,7 @@
 # - Lasse Nielsen.                                                    #
 #=====================================================================#
 name = rcp
-version = 1.3.0
+version = 1.4.0
 libname = lib$(name).so
 #OS_LINUXlibname = lib$(name).so
 #OS_MAClibname = lib$(name).dylib

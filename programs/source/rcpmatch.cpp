@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   { re_method=argv[1];
   }
   if (re_method=="help")
-  { cout << "Syntax: " << argv[0] << " [help|re|nfa|nfa_reduce|dfa|dfa_reduce|dfasim|dfasim_reduce|frca|debug] [print|accept|decompress|compress|compile|time|timems|size] [<exp> [<str>]]" << endl;
+  { cout << "Syntax: " << argv[0] << " [help|re|nfa|nfa_reduce|nfa_minimize|nfa_thompson|dfa|dfa_reduce|dfa_minimize|dfasim|dfasim_reduce|frca|debug] [print|accept|decompress|compress|compile|time|timems|size] [<exp> [<str>]]" << endl;
     return 0;
   }
   string re_cmd="frca";
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-  if (re_method=="nfa") // {{{
+  else if (re_method=="nfa") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
     double c_2=gettime();
@@ -302,7 +302,7 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-  if (re_method=="nfa_minimize") // {{{
+  else if (re_method=="nfa_minimize") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
     nfa.RemoveDeadStates();
@@ -342,7 +342,7 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-  if (re_method=="nfa_reduce") // {{{
+  else if (re_method=="nfa_reduce") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
     nfa.RemoveDeadStates();
@@ -379,6 +379,40 @@ int main(int argc, char **argv)
     }
     else
     { cout << "Unknown NFA command: " << re_cmd << endl;
+      return 0;
+    }
+  } // }}}
+  else if (re_method=="nfa_thompson") // {{{
+  { double c_1=gettime();
+    NFA nfa(*re);
+    double c_2=gettime();
+    if (re_cmd=="print")
+    { cout << nfa.ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress")
+    { try
+      { pair<unsigned int, vector<char> > result=nfa.ThompsonGL(re_str);
+        cout << "Number of bits: " << result.first << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
+    else if (re_cmd=="time")
+    { double t_1=gettime();
+      nfa.ThompsonGL(re_str);
+      double t_2=gettime();
+      if (n>=0)
+        cout << n << " ";
+      cout.precision(10);
+      cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else
+    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
       return 0;
     }
   } // }}}

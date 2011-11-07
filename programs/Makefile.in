@@ -1,7 +1,7 @@
 program = rcpmatch
 programs = $(program)
 name = $(program)
-version = 1.1.0
+version = 1.4.0
 compiler = g++
 args = -O3 -Wno-deprecated
 libs = -lrcp
