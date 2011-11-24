@@ -200,19 +200,37 @@ void NFA::Closure(std::map<int,std::pair<std::string,int> > &nodes) const // {{{
   }
   return;
 } // }}}
-class path
-{ public:
-    path() {bits = 0;}
-
-    unsigned bits;
-    vector<char> data;
-};
-typedef map<int,path> state;
-pair<unsigned int, vector<char> > NFA::ThompsonGL(const string &s) const // {{{
+void NFA::Closure(std::map<int,BitCode> &nodes) const // {{{
 {
+  map<int,BitCode> tmpNodes=nodes;
+  // Continue while new nodes are found
+  while (tmpNodes.size()>0)
+  { // Consider the least node
+    map<int,BitCode>::iterator node=tmpNodes.begin();
+    // Consider each edge from that node
+    for (int edge=0; edge<myNodes[node->first].CountTransitions(); ++edge)
+    { // If epsilon-edge and destination is new, add it to the new nodes
+      if (myNodes[node->first].GetTransition(edge).GetInput()=="" &&
+          nodes.find(myNodes[node->first].GetTransition(edge).GetDest())==nodes.end())
+      {
+        tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()]=node->second;
+        for (int bit=0; bit<myNodes[node->first].GetTransition(edge).GetOutput().size(); ++bit)
+          tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()].PushBit(myNodes[node->first].GetTransition(edge).GetOutput()[bit]=='1');
+        nodes[myNodes[node->first].GetTransition(edge).GetDest()]=tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()];
+      }
+    }
+    // Clear the considered node from tmpNodes
+    tmpNodes.erase(node);
+  }
+  return;
+} // }}}
+BitCode NFA::ThompsonGL(const string &s) const // {{{
+{
+  typedef map<int,BitCode> state;
   state cur_state;
-  cur_state[0]=path();
+  cur_state[0]=BitCode();
   // Perform epsilon-closure
+  Closure(cur_state);
   for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
   { // Find direct edges
     state next_state;
@@ -225,23 +243,21 @@ pair<unsigned int, vector<char> > NFA::ThompsonGL(const string &s) const // {{{
             next_state[GetNode(node->first).GetTransition(edge).GetDest()]=node->second;
             for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
             { // Add extra bits
-              if (next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits%8 == 0)
-                next_state[GetNode(node->first).GetTransition(edge).GetDest()].data.push_back('\0');
-              next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits++;
-              next_state[GetNode(node->first).GetTransition(edge).GetDest()].data.back() &= (1<<next_state[GetNode(node->first).GetTransition(edge).GetDest()].bits);
+              next_state[GetNode(node->first).GetTransition(edge).GetDest()].PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
             }
           }
         }
       }
     }
     // Perform epsilon-closure
+    Closure(next_state);
 
     cur_state=next_state;
   }
 
   for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
     if (GetNode(node->first).Final())
-      return pair<unsigned int, vector<char> >(node->second.bits,node->second.data);
+      return node->second;
   throw (string)"Error: No Match";
 } // }}}
 string NFA::ToString() // {{{

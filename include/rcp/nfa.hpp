@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <rcp/bitcode.hpp>
 #include <rcp/re.hpp>
 
 /** NFATransition represents a transition (an edge) in a NFA.
@@ -68,13 +69,14 @@ class NFA // {{{
     std::string Compress(const std::string &s) const;
     // Thompson simulation based parsing
     // Not as efficient as DFASIM, but ensures greedy, leeftmost match
-    std::pair<unsigned int, std::vector<char> > ThompsonGL(const std::string &s) const;
+    BitCode ThompsonGL(const std::string &s) const;
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s) const;
     // Find the epsilon-closure of a set of nodes in the NFA
     // The structure of the elementa are (dest,(output,source))
     void Closure(std::map<int,std::pair<std::string,int> > &nodes) const;
+    void Closure(std::map<int,BitCode> &nodes) const;
     // ToString prints the NFA in the dot format for easy debugging
     std::string ToString();
 

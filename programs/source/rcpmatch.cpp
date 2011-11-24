@@ -1,3 +1,4 @@
+#include <rcp/bitcode.hpp>
 #include <rcp/re.hpp>
 #include <rcp/nfa.hpp>
 #include <rcp/dfa.hpp>
@@ -392,8 +393,8 @@ int main(int argc, char **argv)
     }
     else if (re_cmd=="compress")
     { try
-      { pair<unsigned int, vector<char> > result=nfa.ThompsonGL(re_str);
-        cout << "Number of bits: " << result.first << endl;
+      { BitCode result=nfa.ThompsonGL(re_str);
+        cout << result.ToString() << endl;
       }
       catch (string s)
       {

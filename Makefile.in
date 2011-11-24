@@ -26,6 +26,7 @@ args = -O3 -fPIC -I./include/ -Wno-deprecated
 #OS_LINUXlibs =
 
 library_objects = \
+  objects/bitcode.o \
   objects/re.o \
   objects/nfa.o \
   objects/dfa.o \
