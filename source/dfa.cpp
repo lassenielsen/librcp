@@ -193,7 +193,7 @@ bool DFA::Accept(const string &s) // {{{
   }
   return node>=0 && myNodes[node].Final()>=0;
 } // }}}
-string DFA::Compress(const string &s) // {{{
+BitCode DFA::Compress(const string &s) // {{{
 { // Find DFA path
   vector<int> path(s.size()+1);
   path[0]=0;
@@ -202,26 +202,26 @@ string DFA::Compress(const string &s) // {{{
     if (path[pos+1]<0)
     { path[pos+1]=CreateNode(path[pos],s[pos]);
       if (path[pos+1]<0)
-        return "No match";
+        throw (string)"Error: No Match";
     }
   }
   // Find NFA node by tracing the DFA path backwards from (the) final NFA node in the end state
   vector<int> nfa_node(s.size()+1);
   nfa_node[s.size()] = myNodes[path[s.size()]].Final();
   if (nfa_node[s.size()]<0)
-    return "No match";
+    throw (string)"Error: No Match";
   for (int pos=s.size(); pos>0; --pos)
     myNodes[path[pos-1]].GetTransition(s[pos-1]).GetOutput(nfa_node[pos],nfa_node[pos-1]);
-  stringstream result;
+  BitCode result;
   // Sequence output from NFA path
   map<int,string>::const_iterator init=myInitCodes.find(nfa_node[0]);
   if (init==myInitCodes.end())
-    return "No Match";
-  result << init->second;
+    throw (string)"Error: No Match";
+  result.Append(init->second);
   int prev;
   for (int pos=0; pos<s.size(); ++pos)
-    result << myNodes[path[pos]].GetTransition(s[pos]).GetOutput(nfa_node[pos+1],prev);
-  return result.str();
+    result.Append(myNodes[path[pos]].GetTransition(s[pos]).GetOutput(nfa_node[pos+1],prev));
+  return result;
 } // }}}
 string DFA::ToString() const // {{{
 {

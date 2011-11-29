@@ -507,7 +507,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="compile")
@@ -562,7 +562,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="compile")
@@ -618,7 +618,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="compile")
@@ -668,7 +668,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")
@@ -705,7 +705,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")
@@ -743,7 +743,7 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="compress")
-    { cout << dfa.Compress(re_str) << endl;
+    { cout << dfa.Compress(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")

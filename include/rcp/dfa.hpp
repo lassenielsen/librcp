@@ -3,9 +3,10 @@
 
 #include <vector>
 #include <string>
-#include <rcp/nfa.hpp>
 #include <ostream>
 #include <ext/hash_map>
+#include <rcp/nfa.hpp>
+#include <rcp/bitcode.hpp>
 
 /** DFATransition represents a transition (an edge) in a DFA.
   * It contains the destination, input and
@@ -70,7 +71,7 @@ class DFA // {{{
     bool Accept(const std::string &s);
     // Compress returns a compact bit-representation of the given string, and
     // throws a string error if the given string is not accepted
-    std::string Compress(const std::string &s);
+    BitCode Compress(const std::string &s);
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s);
@@ -79,7 +80,6 @@ class DFA // {{{
     // Compile generates C-code to parse strings to compact bit representation
     std::string Compile() const;
     void Compile(std::ostream &dest) const;
-
 
   private:
     // Create constructs DFA nodes with transitions
