@@ -542,17 +542,17 @@ RE *RE::Copy() const // {{{
 bool RE::Accept(const std::string &s, int start, int end) const // {{{
 { return false;
 } // }}}
-string RE::Compress(const std::string &s) const // {{{
+BitCode RE::Compress(const std::string &s) const // {{{
 { bool accept;
-  string v=Compress(s,0,s.size(),accept);
+  BitCode v=Compress(s,0,s.size(),accept);
   if (accept)
     return v;
   else
-    return "Error: No Match";
+    throw (string)"Error: No Match";
 } // }}}
-string RE::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { accept=false;
-  return "";
+  return BitCode();
 } // }}}
 
 RE_One::RE_One() // {{{
@@ -574,14 +574,14 @@ bool RE_One::Accept(const std::string &s, int start, int end) const // {{{
     end=s.size();
   return start==end;
 } // }}}
-string RE_One::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE_One::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { if (end<0)
     end=s.size();
   if (start==end)
     accept=true;
   else
     accept=false;
-  return "";
+  return BitCode();
 } // }}}
 RE_One *RE_One::Copy() const // {{{
 { return new RE_One();
@@ -624,14 +624,14 @@ bool RE_Char::Accept(const std::string &s, int start, int end) const // {{{
     end=s.size();
   return start+1==end && s[start]==myChar;
 } // }}}
-string RE_Char::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE_Char::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { if (end<0)
     end=s.size();
   if (start+1==end && s[start]==myChar)
     accept=true;
   else
     accept=false;
-  return "";
+  return BitCode();
 } // }}}
 RE_Char *RE_Char::Copy() const // {{{
 { return new RE_Char(myChar);
@@ -671,21 +671,22 @@ bool RE_Seq::Accept(const std::string &s, int start, int end) const // {{{
       return true;
   return false;
 } // }}}
-string RE_Seq::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE_Seq::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { if (end<0)
     end=s.size();
   for (int split=end; split>=start; --split)
   { bool accept1;
-    string v1 = myLeft->Compress(s,start,split,accept1);
+    BitCode v1 = myLeft->Compress(s,start,split,accept1);
     bool accept2;
-    string v2 = myRight->Compress(s,split,end,accept2);
+    BitCode v2 = myRight->Compress(s,split,end,accept2);
     if (accept1 && accept2)
     { accept=true;
-      return v1+v2;
+      v1.Append(v2);
+      return v1;
     }
   }
   accept=false;
-  return "";
+  return BitCode();
 } // }}}
 RE_Seq *RE_Seq::Copy() const // {{{
 { return new RE_Seq(myLeft->Copy(),myRight->Copy());
@@ -730,16 +731,24 @@ bool RE_Sum::Accept(const std::string &s, int start, int end) const // {{{
     end=s.size();
   return myLeft->Accept(s,start,end) || myRight->Accept(s,start,end);
 } // }}}
-string RE_Sum::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE_Sum::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { if (end<0)
     end=s.size();
-  string v=myLeft->Compress(s,start,end,accept);
+  BitCode v=myLeft->Compress(s,start,end,accept);
   if (accept)
-    return "0"+v;
+  { BitCode result;
+    result.PushBit(false);
+    result.Append(v);
+    return result;
+  }
   v=myRight->Compress(s,start,end,accept);
   if (accept)
-    return "1"+v;
-  return "";
+  { BitCode result;
+    result.PushBit(true);
+    result.Append(v);
+    return result;
+  }
+  return BitCode();
 } // }}}
 RE_Sum *RE_Sum::Copy() const // {{{
 { return new RE_Sum(myLeft->Copy(),myRight->Copy());
@@ -787,22 +796,29 @@ bool RE_Star::Accept(const std::string &s, int start, int end) const // {{{
       return true;
   return false;
 } // }}}
-string RE_Star::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
+BitCode RE_Star::Compress(const std::string &s, int start, int end, bool &accept) const // {{{
 { if (end<0)
     end=s.size();
   if (start==end)
   { accept= true;
-    return "0";
+    BitCode result;
+    result.PushBit(false);
+    return result;
   }
   for (int split=end; split>start; --split) // Greedy approach
-  { string v1=mySub->Compress(s,start,split,accept);
+  { BitCode v1=mySub->Compress(s,start,split,accept);
     if (accept)
-    { string v2=Compress(s,split,end,accept);
+    { BitCode v2=Compress(s,split,end,accept);
       if (accept)
-        return "1"+v1+v2;
+      { BitCode result;
+        result.PushBit(true);
+	result.Append(v1);
+	result.Append(v2);
+        return result;
+      }
     }
   }
-  return "";
+  return BitCode();
 } // }}}
 RE_Star *RE_Star::Copy() const // {{{
 { return new RE_Star(mySub->Copy());
@@ -827,9 +843,9 @@ string RV_Unit::ToString() const // {{{
 {
   return "()";
 } // }}}
-string RV_Unit::BitRep() const // {{{
+BitCode RV_Unit::BitRep() const // {{{
 {
-  return "";
+  return BitCode();
 } // }}}
 
 RV_Char::RV_Char(char ch) // {{{
@@ -851,9 +867,9 @@ string RV_Char::ToString() const // {{{
   result += myChar;
   return result;
 } // }}}
-string RV_Char::BitRep() const // {{{
+BitCode RV_Char::BitRep() const // {{{
 {
-  return "";
+  return BitCode();
 } // }}}
 
 RV_Inl::RV_Inl(RV *val) // {{{
@@ -872,9 +888,12 @@ string RV_Inl::ToString() const // {{{
 {
   return (string)"inl("+myVal->ToString()+")";
 } // }}}
-string RV_Inl::BitRep() const // {{{
+BitCode RV_Inl::BitRep() const // {{{
 {
-  return (string)"0"+myVal->BitRep();
+  BitCode result;
+  result.PushBit(false);
+  result.Append(myVal->BitRep());
+  return BitCode();
 } // }}}
 const RV* RV_Inl::GetLeft() const // {{{
 { return myVal;
@@ -896,9 +915,12 @@ string RV_Inr::ToString() const // {{{
 {
   return (string)"inr("+myVal->ToString()+")";
 } // }}}
-string RV_Inr::BitRep() const // {{{
+BitCode RV_Inr::BitRep() const // {{{
 {
-  return (string)"1"+myVal->BitRep();
+  BitCode result;
+  result.PushBit(true);
+  result.Append(myVal->BitRep());
+  return BitCode();
 } // }}}
 const RV* RV_Inr::GetRight() const // {{{
 { return myVal;
@@ -922,9 +944,11 @@ string RV_Pair::ToString() const // {{{
 {
   return (string)"("+myFront->ToString()+"," + myBack->ToString() + ")";
 } // }}}
-string RV_Pair::BitRep() const // {{{
+BitCode RV_Pair::BitRep() const // {{{
 {
-  return myFront->BitRep() + myBack->BitRep();
+  BitCode result = myFront->BitRep();
+  result.Append(myBack->BitRep());
+  return result;
 } // }}}
 const RV* RV_Pair::GetFront() const // {{{
 { return myFront;
@@ -949,9 +973,9 @@ string RV_Fold::ToString() const // {{{
 {
   return (string)"fold("+myVal->ToString()+")";
 } // }}}
-string RV_Fold::BitRep() const // {{{
+BitCode RV_Fold::BitRep() const // {{{
 {
-  return (string)"1"+myVal->BitRep();
+  return myVal->BitRep();
 } // }}}
 const RV* RV_Fold::GetSub() const // {{{
 { return myVal;

@@ -3,6 +3,8 @@
 
 #include <map>
 #include <string>
+#include <rcp/bitcode.hpp>
+
 
 /** RV is an abstract superclass for all Regular Expression(RE) values.
   * RE Values is a parse-tree for string values with respect to a regular expressions.
@@ -15,7 +17,7 @@ class RV // {{{
     virtual ~RV() {}
     virtual std::string Flatten() const=0;
     virtual std::string ToString() const=0;
-    virtual std::string BitRep() const=0;
+    virtual BitCode BitRep() const=0;
 }; // }}}
 class RV_Unit : public RV // {{{
 {
@@ -24,7 +26,7 @@ class RV_Unit : public RV // {{{
     virtual ~RV_Unit();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
 }; // }}}
 class RV_Char : public RV // {{{
 {
@@ -33,7 +35,7 @@ class RV_Char : public RV // {{{
     virtual ~RV_Char();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
 
   private:
     char myChar;
@@ -45,7 +47,7 @@ class RV_Inl : public RV // {{{
     virtual ~RV_Inl();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
     const RV *GetLeft() const;
 
   private:
@@ -58,7 +60,7 @@ class RV_Inr : public RV // {{{
     virtual ~RV_Inr();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
     const RV *GetRight() const;
 
   private:
@@ -71,7 +73,7 @@ class RV_Pair : public RV // {{{
     virtual ~RV_Pair();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
     const RV *GetFront() const;
     const RV *GetBack() const;
 
@@ -86,7 +88,7 @@ class RV_Fold : public RV // {{{
     virtual ~RV_Fold();
     virtual std::string Flatten() const;
     virtual std::string ToString() const;
-    virtual std::string BitRep() const;
+    virtual BitCode BitRep() const;
     const RV *GetSub() const;
 
   private:
@@ -101,16 +103,17 @@ class RE                    // Represents 0 {{{
 { public:
     RE();
     virtual ~RE();
-    // Levels for ToString:
-    // 0 = () or init
-    // 1 = plus level
-    // 2 = seq level
-    // 3 = star level
+    /** Levels for ToString:
+      * 0 = () or init
+      * 1 = plus level
+      * 2 = seq level
+      * 3 = star level
+      */
     virtual std::string ToString(int level=0) const; 
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    std::string Compress(const std::string &s) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    BitCode Compress(const std::string &s) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
 
     virtual RE* Copy() const;
     static RE *Create(const std::string &exp);
@@ -123,7 +126,7 @@ class RE_One : public RE    // Represents 1 {{{
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_One* Copy() const;
 
   private:
@@ -135,7 +138,7 @@ class RE_Char : public RE   // Represents a {{{
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Char* Copy() const;
     char GetChar() const;
 
@@ -149,7 +152,7 @@ class RE_Seq : public RE    // Represents R1xR2 {{{
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Seq* Copy() const;
     const RE &GetFront() const;
     const RE &GetBack() const;
@@ -165,7 +168,7 @@ class RE_Sum : public RE    // Represents R1+R2 {{{
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Sum* Copy() const;
     const RE &GetLeft() const;
     const RE &GetRight() const;
@@ -181,7 +184,7 @@ class RE_Star : public RE   // Represents R1* {{{
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const std::string &bitvalue, int &pos) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
-    virtual std::string Compress(const std::string &s, int start, int end, bool &accept) const;
+    virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Star* Copy() const;
     const RE &GetSub() const;
 

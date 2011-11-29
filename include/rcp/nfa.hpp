@@ -5,6 +5,7 @@
 #include <string>
 #include <set>
 #include <rcp/bitcode.hpp>
+#include <rcp/bitcode_order.hpp>
 #include <rcp/re.hpp>
 
 /** NFATransition represents a transition (an edge) in a NFA.
@@ -66,17 +67,18 @@ class NFA // {{{
     bool Accept(const std::string &s) const;
     // Compress returns a compact bit-representation of the given string, and
     // throws a string error if the given string is not accepted
-    std::string Compress(const std::string &s) const;
+    BitCode Compress(const std::string &s) const;
     // Thompson simulation based parsing
-    // Not as efficient as DFASIM, but ensures greedy, leeftmost match
-    BitCode ThompsonGL(const std::string &s) const;
+    // Not as efficient as DFASIM, but returns the least bitcode for the given ordering.
+    // This enables greedy-leftmost and longest-leftmost disambiguations
+    BitCode Thompson(const std::string &s, const BCOrder &order) const;
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s) const;
     // Find the epsilon-closure of a set of nodes in the NFA
     // The structure of the elementa are (dest,(output,source))
     void Closure(std::map<int,std::pair<std::string,int> > &nodes) const;
-    void Closure(std::map<int,BitCode> &nodes) const;
+    void Closure(std::map<int,BitCode> &nodes, const BCOrder &order) const;
     // ToString prints the NFA in the dot format for easy debugging
     std::string ToString();
 
@@ -92,7 +94,7 @@ class NFA // {{{
 
   private:
     bool Accept(const std::string &s, int pos, std::set<int> marked) const;
-    bool Compress(const std::string &s, int pos, std::string &dest, std::set<int> marked) const;
+    bool Compress(const std::string &s, int pos, BitCode &dest, std::set<int> marked) const;
     std::vector<NFATransition> CompactEdges(const NFATransition &edge);
     // Create constructs NFA nodes representing exp, starting at the start
     // node. The return value contains the final node. 

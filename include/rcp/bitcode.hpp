@@ -12,9 +12,15 @@ class BitCode // {{{
   public:
     BitCode();
     virtual ~BitCode();
+
     unsigned int GetLength() const;
-    void PushBit(bool bit);
     bool GetBit(unsigned int index) const;
+
+    void PushBit(bool bit);
+    void Append(const BitCode &rhs);
+    void Append(const std::string &rhs);
+    BitCode Reverse();
+
     std::string ToString() const;
 
   private:

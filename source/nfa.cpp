@@ -129,27 +129,25 @@ bool NFA::Accept(const string &s, int pos, set<int> marked) const // {{{
         return true;
   return false;
 } // }}}
-string NFA::Compress(const string &s) const // {{{
+BitCode NFA::Compress(const string &s) const // {{{
 {
-  string result="";
+  BitCode result;
   set<int> empty;
   if (Compress(s,0,result,empty))
-  { reverse(result.begin(),result.end()); // reverse string
+  { result=result.Reverse(); // reverse bits
     return result;
   }
   else
-    return "ERROR: NO MATCH";
+    throw (string)"Error: No Match";
 } // }}}
-bool NFA::Compress(const string &s, int pos, string &dest, set<int> marked) const // {{{
+bool NFA::Compress(const string &s, int pos, BitCode &dest, set<int> marked) const // {{{
 {
   if (marked.find(pos) != marked.end())
     return false;
   marked.insert(pos);
 
   if (s.size()==0 && myNodes[pos].Final())
-  { dest="";
     return true;
-  }
 
   for (int i=0; i<myNodes[pos].CountTransitions(); ++i)
     if (myNodes[pos].GetTransition(i).GetInput().size()==0)
@@ -157,7 +155,9 @@ bool NFA::Compress(const string &s, int pos, string &dest, set<int> marked) cons
           myNodes[pos].GetTransition(i).GetDest(),
           dest,
           marked))
-      { dest+=myNodes[pos].GetTransition(i).GetOutput();
+      { string s=myNodes[pos].GetTransition(i).GetOutput();
+        reverse(s.begin(),s.end());
+        dest.Append(s);
         return true;
       }
     }
@@ -167,7 +167,9 @@ bool NFA::Compress(const string &s, int pos, string &dest, set<int> marked) cons
           myNodes[pos].GetTransition(i).GetDest(),
           dest,
           set<int>()))
-      { dest+=myNodes[pos].GetTransition(i).GetOutput();
+      { string s=myNodes[pos].GetTransition(i).GetOutput();
+        reverse(s.begin(),s.end());
+        dest.Append(s);
         return true;
       }
     }
@@ -200,7 +202,7 @@ void NFA::Closure(std::map<int,std::pair<std::string,int> > &nodes) const // {{{
   }
   return;
 } // }}}
-void NFA::Closure(std::map<int,BitCode> &nodes) const // {{{
+void NFA::Closure(std::map<int,BitCode> &nodes, const BCOrder &order) const // {{{
 {
   map<int,BitCode> tmpNodes=nodes;
   // Continue while new nodes are found
@@ -209,13 +211,18 @@ void NFA::Closure(std::map<int,BitCode> &nodes) const // {{{
     map<int,BitCode>::iterator node=tmpNodes.begin();
     // Consider each edge from that node
     for (int edge=0; edge<myNodes[node->first].CountTransitions(); ++edge)
-    { // If epsilon-edge and destination is new, add it to the new nodes
+    { 
+      BitCode code=node->second; // Source code
+      for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
+      { // Add extra bits
+        code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
+      }
+      // If epsilon-edge and creates better path, add it to the new nodes
       if (myNodes[node->first].GetTransition(edge).GetInput()=="" &&
-          nodes.find(myNodes[node->first].GetTransition(edge).GetDest())==nodes.end())
+          (nodes.find(myNodes[node->first].GetTransition(edge).GetDest())==nodes.end() ||
+	   order.LEQ(code,nodes.find(myNodes[node->first].GetTransition(edge).GetDest())->second) ) )
       {
-        tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()]=node->second;
-        for (int bit=0; bit<myNodes[node->first].GetTransition(edge).GetOutput().size(); ++bit)
-          tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()].PushBit(myNodes[node->first].GetTransition(edge).GetOutput()[bit]=='1');
+        tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()]=code;
         nodes[myNodes[node->first].GetTransition(edge).GetDest()]=tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()];
       }
     }
@@ -224,13 +231,13 @@ void NFA::Closure(std::map<int,BitCode> &nodes) const // {{{
   }
   return;
 } // }}}
-BitCode NFA::ThompsonGL(const string &s) const // {{{
+BitCode NFA::Thompson(const string &s, const BCOrder &order) const // {{{
 {
   typedef map<int,BitCode> state;
   state cur_state;
   cur_state[0]=BitCode();
   // Perform epsilon-closure
-  Closure(cur_state);
+  Closure(cur_state,order);
   for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
   { // Find direct edges
     state next_state;
@@ -238,19 +245,21 @@ BitCode NFA::ThompsonGL(const string &s) const // {{{
     { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
       { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 &&
             GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
-        { if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end())
-          { // Set State
-            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=node->second;
-            for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
-            { // Add extra bits
-              next_state[GetNode(node->first).GetTransition(edge).GetDest()].PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
-            }
+        { // Create bitcode
+	  BitCode code=node->second; // Source code
+	  for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
+          { // Add extra bits
+            code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
           }
+	  // Set state if better path is found
+	  if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end() ||
+	      order.LEQ(code,next_state.find(GetNode(node->first).GetTransition(edge).GetDest())->second))
+            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=code;
         }
       }
     }
     // Perform epsilon-closure
-    Closure(next_state);
+    Closure(next_state,order);
 
     cur_state=next_state;
   }

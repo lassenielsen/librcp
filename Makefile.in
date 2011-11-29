@@ -27,6 +27,7 @@ args = -O3 -fPIC -I./include/ -Wno-deprecated
 
 library_objects = \
   objects/bitcode.o \
+  objects/bitcode_order.o \
   objects/re.o \
   objects/nfa.o \
   objects/dfa.o \
