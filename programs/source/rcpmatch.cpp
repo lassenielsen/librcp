@@ -244,7 +244,9 @@ int main(int argc, char **argv)
     } // }}}
     if (re_cmd=="decompress") // {{{
     { int pos=0;
-      cout << re->Decompress(re_str,pos)->Flatten() << endl;
+      BitCode bits;
+      bits.Append(re_str);
+      cout << re->Decompress(bits,pos)->Flatten() << endl;
       if (pos != re_str.size())
         cout << "Error: Not alle of the bitvalue was used" << endl;
       return 0;
@@ -776,7 +778,7 @@ int main(int argc, char **argv)
     }
     else if (re_cmd=="compress")
     { int pos=0;
-      cout << frca->Compress(pos) << endl;
+      cout << frca->Compress(pos).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")

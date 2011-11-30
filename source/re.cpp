@@ -532,7 +532,7 @@ string RE::ToString(int level) const // {{{
 {
   return "0";
 } // }}}
-RV *RE::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return NULL; // Error: No value
 } // }}}
@@ -565,7 +565,7 @@ string RE_One::ToString(int level) const // {{{
 {
   return "1";
 } // }}}
-RV *RE_One::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE_One::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Unit();
 } // }}}
@@ -615,7 +615,7 @@ string RE_Char::ToString(int level) const // {{{
   }
   return s;
 } // }}}
-RV *RE_Char::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE_Char::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Char(myChar);
 } // }}}
@@ -658,7 +658,7 @@ string RE_Seq::ToString(int level) const // {{{
   else
     return myLeft->ToString(2) + myRight->ToString(2);
 } // }}}
-RV *RE_Seq::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE_Seq::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Pair(myLeft->Decompress(bitvalue,pos),myRight->Decompress(bitvalue,pos));
 } // }}}
@@ -717,11 +717,11 @@ string RE_Sum::ToString(int level) const // {{{
   else
     return myLeft->ToString(1) + "+" + myRight->ToString(1);
 } // }}}
-RV *RE_Sum::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE_Sum::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
-  if (pos>=bitvalue.size())
+  if (pos>=bitvalue.GetLength())
     return NULL;
-  if (bitvalue[pos++]=='0')
+  if (not bitvalue.GetBit(pos++))
     return new RV_Inl(myLeft->Decompress(bitvalue,pos));
   else
     return new RV_Inr(myRight->Decompress(bitvalue,pos));
@@ -777,11 +777,11 @@ string RE_Star::ToString(int level) const // {{{
   else
     return mySub->ToString(3) + "*";
 } // }}}
-RV *RE_Star::Decompress(const string &bitvalue, int &pos) const // {{{
+RV *RE_Star::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
-  if (pos>=bitvalue.size())
+  if (pos>=bitvalue.GetLength())
     return NULL;
-  if (bitvalue[pos++]=='0')
+  if (not bitvalue.GetBit(pos++))
     return new RV_Fold(new RV_Inl(new RV_Unit));
   else
     return new RV_Fold(new RV_Inr(new RV_Pair(mySub->Decompress(bitvalue,pos),Decompress(bitvalue,pos))));

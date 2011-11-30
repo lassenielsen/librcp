@@ -1,8 +1,10 @@
 #ifndef RCP_FRCA
 #define RCP_FRCA
 
-#include <rcp/re.hpp>
 #include <vector>
+#include <set>
+#include <rcp/re.hpp>
+#include <rcp/bitcode.hpp>
 
 /** FRCA uses tags each node with the suffixes
   * of the string it is created by.
@@ -16,10 +18,10 @@
 class FRCA // Represents 0 {{{
 { public:
     // Create a FRCA which can parse a string of length size
-    FRCA(int size);
+    FRCA();
     virtual ~FRCA();
     bool Accept() const;
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     static FRCA *Create(const RE *exp, int size);
     // AddSuffix adds a suffix, and returns all new maches produced by that suffix
@@ -29,24 +31,23 @@ class FRCA // Represents 0 {{{
     int MaxSuffix() const;
 
   protected:
-    bool *mySuffixes;
-    int mySize;
+    std::set<int> mySuffixes;
 }; // }}}
 class FRCA_One : public FRCA // Represents 1 {{{
 { public:
-    FRCA_One(int size);
+    FRCA_One();
     virtual ~FRCA_One();
     
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     virtual std::vector<int> AddSuffix(const std::string &string, int pos);
 }; // }}}
 class FRCA_Char : public FRCA // Represents a {{{
 { public:
-    FRCA_Char(int size, char ch);
+    FRCA_Char(char ch);
     virtual ~FRCA_Char();
 
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     virtual std::vector<int> AddSuffix(const std::string &string, int pos);
 
@@ -57,10 +58,10 @@ class FRCA_Char : public FRCA // Represents a {{{
 }; // }}}
 class FRCA_Seq : public FRCA // Represents R1xR2 {{{
 { public:
-    FRCA_Seq(int size, FRCA *left, FRCA *right);
+    FRCA_Seq(FRCA *left, FRCA *right);
     virtual ~FRCA_Seq();
 
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     virtual std::vector<int> AddSuffix(const std::string &string, int pos);
 
@@ -73,10 +74,10 @@ class FRCA_Seq : public FRCA // Represents R1xR2 {{{
 }; // }}}
 class FRCA_Sum : public FRCA // Represents R1+R2 {{{
 { public:
-    FRCA_Sum(int size, FRCA *left, FRCA *right);
+    FRCA_Sum(FRCA *left, FRCA *right);
     virtual ~FRCA_Sum();
 
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     virtual std::vector<int> AddSuffix(const std::string &string, int pos);
 
@@ -89,10 +90,10 @@ class FRCA_Sum : public FRCA // Represents R1+R2 {{{
 }; // }}}
 class FRCA_Star : public FRCA // Represents R1* {{{
 { public:
-    FRCA_Star(int size, FRCA *sub);
+    FRCA_Star(FRCA *sub);
     virtual ~FRCA_Star();
 
-    virtual std::string Compress(int &pos) const;
+    virtual BitCode Compress(int &pos) const;
     virtual std::string ToString() const;
     virtual std::vector<int> AddSuffix(const std::string &string, int pos);
 

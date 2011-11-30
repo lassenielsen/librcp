@@ -1,7 +1,7 @@
 program = rcpmatch
 programs = $(program)
 name = $(program)
-version = 1.4.0
+version = 1.5.0
 compiler = g++
 args = -O3 -Wno-deprecated
 libs = -lrcp
@@ -90,7 +90,7 @@ deb: $(program)
 	echo "Architecture: i386"                                     >> debs/$(name)_$(version)_i386/DEBIAN/control
 	echo "Maintainer: Lasse Nielsen <lasse.nielsen.dk@gmail.com>" >> debs/$(name)_$(version)_i386/DEBIAN/control
 	echo "Installed-Size: 1024"                                   >> debs/$(name)_$(version)_i386/DEBIAN/control
-	echo "Depends: librcp (>= 1.0)"                             >> debs/$(name)_$(version)_i386/DEBIAN/control
+	echo "Depends: librcp (>= 1.5)"                             >> debs/$(name)_$(version)_i386/DEBIAN/control
 	echo "Recommends: "                                           >> debs/$(name)_$(version)_i386/DEBIAN/control
 	echo "Suggests: "                                             >> debs/$(name)_$(version)_i386/DEBIAN/control
 	echo "Conflicts: "                                            >> debs/$(name)_$(version)_i386/DEBIAN/control
