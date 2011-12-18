@@ -29,7 +29,7 @@ class BCOrder_GL : public BCOrder // {{{
   */
 class BCOrder_LL : public BCOrder // {{{
 { public:
-    BCOrder_LL(const RE *re);
+    BCOrder_LL(const RE &re);
     virtual ~BCOrder_LL();
 
     bool LEQ(const BitCode &lhs, const BitCode &rhs) const;
