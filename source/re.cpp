@@ -254,7 +254,7 @@ RE *makeIntervalExp(RE *exp,int min, int max) // {{{
     return new RE_Seq(exp->Copy(),makeIntervalExp(exp,min-1,max-1));
 } // }}}
 
-// Turn string into list of tokens (tokeinze)
+// Turn string into list of tokens (tokenize)
 void makeReg1(const string &def, list<ParseElt*> &dest) // Tokenize {{{
 { for (int i=0; i<def.size(); ++i)
   { switch (def[i])
@@ -404,7 +404,7 @@ void makeRegStar(list<ParseElt*> &source, list<ParseElt*> &dest) // Apply star t
       source.push_front(new ParseElt(newExp)); // Make source=1+r,...
     }
     else if (elt1->GetType()==isExp &&
-             elt2->GetType()==isInterval) // source =r,?,...
+             elt2->GetType()==isInterval) // source =r,{n,m},...
     { RE *newExp = makeIntervalExp(elt1->ReleaseExp(),elt2->GetMin(),elt2->GetMax());
       delete elt1;
       delete elt2;
