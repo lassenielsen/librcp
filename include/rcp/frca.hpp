@@ -6,7 +6,7 @@
 #include <rcp/re.hpp>
 #include <rcp/bitcode.hpp>
 
-/** FRCA uses tags each node with the suffixes
+/** FRCA tags each node with the suffixes
   * of the string it is created by.
   * The FRCA class is a superclass of all
   * the Tagged RE constructor classes,
