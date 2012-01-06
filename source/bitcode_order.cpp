@@ -68,12 +68,12 @@ PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
     return result;
   }
   if (re_sum!=NULL)
-  { return bc.GetBit(pos)==BC_INL?
+  { return bc.GetBit(pos)==BitCode::INL?
 	   PartSerialize(bc,&(re_sum->GetLeft()),pos+1):
            PartSerialize(bc,&(re_sum->GetRight()),pos+1);
   }
   if (re_star!=NULL)
-  { if (bc.GetBit(pos)==BC_CONS)
+  { if (bc.GetBit(pos)==BitCode::CONS)
     { PS_RESULT result1=PartSerialize(bc,&(re_star->GetSub()),pos+1);
       int midpos=result1.pos;
       PS_RESULT result2=PartSerialize(bc,re_star,midpos);
@@ -142,15 +142,15 @@ LEQ_RESULT LEQ_LL(const BitCode &bc1, int pos1, // {{{
   }
   else if (re_sum!=NULL)
   { try
-    { if ((bc1.GetBit(pos1)==BC_INL) && (bc2.GetBit(pos2)==BC_INL))
+    { if ((bc1.GetBit(pos1)==BitCode::INL) && (bc2.GetBit(pos2)==BitCode::INL))
         return LEQ_LL(bc1,pos1+1,bc2,pos2+1,&(re_sum->GetLeft()));
-      else if ((bc1.GetBit(pos1)==BC_INR) && (bc2.GetBit(pos2)==BC_INR))
+      else if ((bc1.GetBit(pos1)==BitCode::INR) && (bc2.GetBit(pos2)==BitCode::INR))
         return LEQ_LL(bc1,pos1+1,bc2,pos2+1,&(re_sum->GetRight()));
       else
       { PS_RESULT ps1= PartSerialize(bc1,exp,pos1);
         PS_RESULT ps2= PartSerialize(bc2,exp,pos2);
         LEQ_RESULT result;
-        if ((bc1.GetBit(pos1)==BC_INL) && (bc2.GetBit(pos2)==BC_INR))
+        if ((bc1.GetBit(pos1)==BitCode::INL) && (bc2.GetBit(pos2)==BitCode::INR))
           result.result=-1;
         else
           result.result=1;
@@ -173,7 +173,7 @@ LEQ_RESULT LEQ_LL(const BitCode &bc1, int pos1, // {{{
   }
   else if (re_star!=NULL)
   { try
-    { if ((bc1.GetBit(pos1)==BC_CONS) && (bc2.GetBit(pos2)==BC_CONS))
+    { if ((bc1.GetBit(pos1)==BitCode::CONS) && (bc2.GetBit(pos2)==BitCode::CONS))
       { LEQ_RESULT result1=LEQ_LL(bc1,pos1+1,bc2,pos2+1,&(re_star->GetSub()));
         LEQ_RESULT result2=LEQ_LL(bc1,result1.pos1,bc2,result1.pos2,exp);
         LEQ_RESULT result;
@@ -189,7 +189,7 @@ LEQ_RESULT LEQ_LL(const BitCode &bc1, int pos1, // {{{
         result.length2=result1.length2+result2.length2;
         return result;
       }
-      else if ((bc1.GetBit(pos1)==BC_NIL) && (bc2.GetBit(pos2)==BC_NIL))
+      else if ((bc1.GetBit(pos1)==BitCode::NIL) && (bc2.GetBit(pos2)==BitCode::NIL))
       { LEQ_RESULT result;
         result.result=0;
         result.pos1=pos1+1;
@@ -202,7 +202,7 @@ LEQ_RESULT LEQ_LL(const BitCode &bc1, int pos1, // {{{
       { PS_RESULT ps1= PartSerialize(bc1,exp,pos1);
         PS_RESULT ps2= PartSerialize(bc2,exp,pos2);
         LEQ_RESULT result;
-        if ((bc1.GetBit(pos1)==BC_CONS) && (bc2.GetBit(pos2)==BC_NIL))
+        if ((bc1.GetBit(pos1)==BitCode::CONS) && (bc2.GetBit(pos2)==BitCode::NIL))
           result.result=-1;
         else
           result.result=1;

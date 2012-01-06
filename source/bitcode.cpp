@@ -2,6 +2,18 @@
 #include <rcp/bitcode_order.hpp>
 using namespace std;
 
+bool BitCode::INL=false;
+char BitCode::INL_CHR='0';
+string BitCode::INL_STR="0";
+bool BitCode::INR=true;
+char BitCode::INR_CHR='1';
+string BitCode::INR_STR="1";
+bool BitCode::CONS=false;
+char BitCode::CONS_CHR='0';
+string BitCode::CONS_STR="0";
+bool BitCode::NIL=true;
+char BitCode::NIL_CHR='1';
+string BitCode::NIL_STR="1";
 BitCode::BitCode() // {{{
 : myLength(0)
 {
@@ -23,10 +35,6 @@ void BitCode::PushBit(bool bit) // {{{
   if (bit)
     myBits.back()=myBits.back()|(1<<(myLength%8));
   ++myLength;
-  return;
-} // }}}
-void BitCode::PushBit(char val) // {{{
-{ PushBit(val=='1');
   return;
 } // }}}
 void BitCode::Append(const BitCode &source) // {{{

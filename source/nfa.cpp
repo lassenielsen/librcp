@@ -310,8 +310,8 @@ int NFA::Create(const RE &exp, int start) // {{{
     int end2=Create(((RE_Sum*)&exp)->GetRight(),start2);
     int end=AddNode();
     // Add Edges
-    myNodes[start].AddTransition(NFATransition(start1,"",BC_INL_STR));
-    myNodes[start].AddTransition(NFATransition(start2,"",BC_INR_STR));
+    myNodes[start].AddTransition(NFATransition(start1,"",BitCode::INL_STR));
+    myNodes[start].AddTransition(NFATransition(start2,"",BitCode::INR_STR));
     myNodes[end1].AddTransition(NFATransition(end,"",""));
     myNodes[end2].AddTransition(NFATransition(end,"",""));
     return end;
@@ -321,8 +321,8 @@ int NFA::Create(const RE &exp, int start) // {{{
     int end1=Create(((RE_Star*)&exp)->GetSub(),start1);
     int end=AddNode();
     // Add Edges
-    myNodes[start].AddTransition(NFATransition(start1,"",BC_CONS_STR));
-    myNodes[start].AddTransition(NFATransition(end,"",BC_NIL_STR));
+    myNodes[start].AddTransition(NFATransition(start1,"",BitCode::CONS_STR));
+    myNodes[start].AddTransition(NFATransition(end,"",BitCode::NIL_STR));
     myNodes[end1].AddTransition(NFATransition(start,"",""));
     return end;
   }
