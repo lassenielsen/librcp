@@ -737,14 +737,14 @@ BitCode RE_Sum::Compress(const std::string &s, int start, int end, bool &accept)
   BitCode v=myLeft->Compress(s,start,end,accept);
   if (accept)
   { BitCode result;
-    result.PushBit(false);
+    result.PushBit(BC_INL);
     result.Append(v);
     return result;
   }
   v=myRight->Compress(s,start,end,accept);
   if (accept)
   { BitCode result;
-    result.PushBit(true);
+    result.PushBit(BC_INR);
     result.Append(v);
     return result;
   }
@@ -802,7 +802,7 @@ BitCode RE_Star::Compress(const std::string &s, int start, int end, bool &accept
   if (start==end)
   { accept= true;
     BitCode result;
-    result.PushBit(false);
+    result.PushBit(BC_NIL);
     return result;
   }
   for (int split=end; split>start; --split) // Greedy approach
@@ -811,7 +811,7 @@ BitCode RE_Star::Compress(const std::string &s, int start, int end, bool &accept
     { BitCode v2=Compress(s,split,end,accept);
       if (accept)
       { BitCode result;
-        result.PushBit(true);
+        result.PushBit(BC_CONS);
 	result.Append(v1);
 	result.Append(v2);
         return result;
@@ -891,7 +891,7 @@ string RV_Inl::ToString() const // {{{
 BitCode RV_Inl::BitRep() const // {{{
 {
   BitCode result;
-  result.PushBit(false);
+  result.PushBit(BC_INL);
   result.Append(myVal->BitRep());
   return BitCode();
 } // }}}
@@ -918,7 +918,7 @@ string RV_Inr::ToString() const // {{{
 BitCode RV_Inr::BitRep() const // {{{
 {
   BitCode result;
-  result.PushBit(true);
+  result.PushBit(BC_INR);
   result.Append(myVal->BitRep());
   return BitCode();
 } // }}}

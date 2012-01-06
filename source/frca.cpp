@@ -200,13 +200,13 @@ BitCode FRCA_Sum::Compress(int &pos) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
   if (myLeft->HasSuffix(pos))
   { BitCode result;
-    result.PushBit(false);
+    result.PushBit(BC_INL);
     result.Append(myLeft->Compress(pos));
     return result;
   }
   else if (myRight->HasSuffix(pos))
   { BitCode result;
-    result.PushBit(true);
+    result.PushBit(BC_INR);
     result.Append(myRight->Compress(pos));
     return result;
   }
@@ -257,12 +257,12 @@ BitCode FRCA_Star::Compress(int &pos) const // {{{
   int old_pos=pos;
   while (mySub->HasSuffix(pos))
   {
-    result.PushBit(true);
+    result.PushBit(BC_CONS);
     result.Append(mySub->Compress(pos));
     if (pos == old_pos)
       throw (string)"Error: Infinite loop";
   }
-  result.PushBit(false);
+  result.PushBit(BC_NIL);
   return result;
 } // }}}
 string FRCA_Star::ToString() const // {{{

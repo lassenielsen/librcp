@@ -25,6 +25,10 @@ void BitCode::PushBit(bool bit) // {{{
   ++myLength;
   return;
 } // }}}
+void BitCode::PushBit(char val) // {{{
+{ PushBit(val=='1');
+  return;
+} // }}}
 void BitCode::Append(const BitCode &source) // {{{
 { for (int i=0;i<source.GetLength(); ++i)
     PushBit(source.GetBit(i));
