@@ -721,7 +721,7 @@ RV *RE_Sum::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   if (pos>=bitvalue.GetLength())
     return NULL;
-  if (not bitvalue.GetBit(pos++))
+  if (bitvalue.GetBit(pos++)==BitCode::INL)
     return new RV_Inl(myLeft->Decompress(bitvalue,pos));
   else
     return new RV_Inr(myRight->Decompress(bitvalue,pos));
@@ -781,7 +781,7 @@ RV *RE_Star::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   if (pos>=bitvalue.GetLength())
     return NULL;
-  if (not bitvalue.GetBit(pos++))
+  if (bitvalue.GetBit(pos++)==BitCode::NIL)
     return new RV_Fold(new RV_Inl(new RV_Unit));
   else
     return new RV_Fold(new RV_Inr(new RV_Pair(mySub->Decompress(bitvalue,pos),Decompress(bitvalue,pos))));
