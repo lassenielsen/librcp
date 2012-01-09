@@ -310,8 +310,6 @@ int NFA::Create(const RE &exp, int start) // {{{
     int end2=Create(((RE_Sum*)&exp)->GetRight(),start2);
     int end=AddNode();
     // Add Edges
-    cout << "Out1: " << BitCode::INL_STR << endl;
-    cout << "Out2: " << BitCode::INR_STR << endl;
     myNodes[start].AddTransition(NFATransition(start1,"",BitCode::INL_STR));
     myNodes[start].AddTransition(NFATransition(start2,"",BitCode::INR_STR));
     myNodes[end1].AddTransition(NFATransition(end,"",""));
