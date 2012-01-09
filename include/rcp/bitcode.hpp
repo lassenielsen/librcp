@@ -23,18 +23,18 @@ class BitCode // {{{
 
     std::string ToString() const;
 
-    static bool INL;
-    static char INL_CHR;
-    static std::string INL_STR;
-    static bool INR;
-    static char INR_CHR;
-    static std::string INR_STR;
-    static bool CONS;
-    static char CONS_CHR;
-    static std::string CONS_STR;
-    static bool NIL;
-    static char NIL_CHR;
-    static std::string NIL_STR;
+    static const bool INL;
+    static const char INL_CHR;
+    static const std::string INL_STR;
+    static const bool INR;
+    static const char INR_CHR;
+    static const std::string INR_STR;
+    static const bool CONS;
+    static const char CONS_CHR;
+    static const std::string CONS_STR;
+    static const bool NIL;
+    static const char NIL_CHR;
+    static const std::string NIL_STR;
 
   private:
     std::vector<char> myBits;

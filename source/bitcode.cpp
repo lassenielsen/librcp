@@ -2,18 +2,23 @@
 #include <rcp/bitcode_order.hpp>
 using namespace std;
 
-bool BitCode::INL=false;
-char BitCode::INL_CHR='0';
-string BitCode::INL_STR="0";
-bool BitCode::INR=true;
-char BitCode::INR_CHR='1';
-string BitCode::INR_STR="1";
-bool BitCode::CONS=false;
-char BitCode::CONS_CHR='0';
-string BitCode::CONS_STR="0";
-bool BitCode::NIL=true;
-char BitCode::NIL_CHR='1';
-string BitCode::NIL_STR="1";
+const char TRUE_CHR = '1';
+const char FALSE_CHR = '0';
+const string TRUE_STR = "1";
+const string FALSE_STR = "0";
+const bool BitCode::INL=false;
+const char BitCode::INL_CHR=BitCode::INL?TRUE_CHR:FALSE_CHR;
+const string BitCode::INL_STR=BitCode::INL?TRUE_STR:FALSE_STR;
+const bool BitCode::INR=true;
+const char BitCode::INR_CHR=BitCode::INR?TRUE_CHR:FALSE_CHR;
+const string BitCode::INR_STR=BitCode::INR?TRUE_STR:FALSE_STR;
+const bool BitCode::CONS=false;
+const char BitCode::CONS_CHR=BitCode::CONS?TRUE_CHR:FALSE_CHR;
+const string BitCode::CONS_STR=BitCode::CONS?TRUE_STR:FALSE_STR;
+const bool BitCode::NIL=true;
+const char BitCode::NIL_CHR=BitCode::NIL?TRUE_CHR:FALSE_CHR;
+const string BitCode::NIL_STR=BitCode::NIL?TRUE_STR:FALSE_STR;
+
 BitCode::BitCode() // {{{
 : myLength(0)
 {

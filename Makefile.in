@@ -26,12 +26,12 @@ args = -O3 -fPIC -I./include/ -Wno-deprecated
 #OS_LINUXlibs =
 
 library_objects = \
-  objects/bitcode.o \
-  objects/bitcode_order.o \
   objects/re.o \
   objects/nfa.o \
   objects/dfa.o \
   objects/frca.o \
+  objects/bitcode_order.o \
+  objects/bitcode.o \
   objects/common.o \
 
 default:
