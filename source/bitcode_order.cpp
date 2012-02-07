@@ -1,4 +1,5 @@
 #include <rcp/bitcode_order.hpp>
+#include <iostream>
 using namespace std;
 
 BCOrder::BCOrder() // {{{
@@ -39,6 +40,7 @@ class PS_RESULT // {{{
 { public:
     int length;
     int pos;
+    bool cyclic;
 }; // }}}
 PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
 { const RE_One *re_one = dynamic_cast<const RE_One*>(exp);
@@ -50,12 +52,14 @@ PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
   { PS_RESULT result;
     result.pos=pos;
     result.length=0;
+    result.cyclic=false;
     return result;
   }
   if (re_char!=NULL)
   { PS_RESULT result;
     result.pos=pos;
     result.length=1;
+    result.cyclic=false;
     return result;
   }
   if (re_seq!=NULL)
@@ -65,27 +69,48 @@ PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
     PS_RESULT result;
     result.pos=result2.pos;
     result.length=result1.length+ result2.length;
+    result.cyclic=result1.cyclic || result2.cyclic;
     return result;
   }
   if (re_sum!=NULL)
-  { return bc.GetBit(pos)==BitCode::INL?
-	   PartSerialize(bc,&(re_sum->GetLeft()),pos+1):
-           PartSerialize(bc,&(re_sum->GetRight()),pos+1);
-  }
-  if (re_star!=NULL)
-  { if (bc.GetBit(pos)==BitCode::CONS)
-    { PS_RESULT result1=PartSerialize(bc,&(re_star->GetSub()),pos+1);
-      int midpos=result1.pos;
-      PS_RESULT result2=PartSerialize(bc,re_star,midpos);
-      PS_RESULT result;
-      result.pos=result2.pos;
-      result.length=result1.length+result2.length;
+  { try
+    { return bc.GetBit(pos)==BitCode::INL?
+             PartSerialize(bc,&(re_sum->GetLeft()),pos+1):
+             PartSerialize(bc,&(re_sum->GetRight()),pos+1);
+    }
+    catch (string s)
+    { PS_RESULT result;
+      result.pos=pos;
+      result.length=0;
+      result.cyclic=0;
       return result;
     }
-    else
+  }
+  if (re_star!=NULL)
+  { try
+    { if (bc.GetBit(pos)==BitCode::CONS)
+      { PS_RESULT result1=PartSerialize(bc,&(re_star->GetSub()),pos+1);
+        int midpos=result1.pos;
+        PS_RESULT result2=PartSerialize(bc,re_star,midpos);
+        PS_RESULT result;
+        result.pos=result2.pos;
+        result.length=result1.length+result2.length;
+        result.cyclic=result1.cyclic || result2.cyclic || result1.length==0;
+        return result;
+      }
+      else
+      { PS_RESULT result;
+        result.pos=pos+1;
+        result.length=0;
+        result.cyclic=false;
+        return result;
+      }
+    }
+    catch (string s)
     { PS_RESULT result;
-      result.pos=pos+1;
+      result.pos=pos;
       result.length=0;
+      result.cyclic=0;
       return result;
     }
   }
@@ -226,7 +251,15 @@ LEQ_RESULT LEQ_LL(const BitCode &bc1, int pos1, // {{{
   throw (string)"Error: Bad expression";
 } // }}}
 bool BCOrder_LL::LEQ(const BitCode &lhs, const BitCode &rhs) const // {{{
-{ LEQ_RESULT result = LEQ_LL(lhs,0,rhs,0,myRE);
-  return result.result<=0;
+{ PS_RESULT ps1=PartSerialize(lhs,myRE,0);
+  PS_RESULT ps2=PartSerialize(rhs,myRE,0);
+  if (ps2.cyclic && !ps1.cyclic)
+    return true;
+  else if (ps1.cyclic && !ps2.cyclic)
+    return false;
+  else
+  { LEQ_RESULT result = LEQ_LL(lhs,0,rhs,0,myRE);
+    return result.result<=0;
+  }
 } // }}}
 
