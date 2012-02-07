@@ -801,7 +801,7 @@ int main(int argc, char **argv)
   else if (re_method=="frca") // {{{
   { double c_1=gettime();
     FRCA *frca=FRCA::Create(re, re_str.size());
-    frca->AddSuffix(re_str,re_str.size());
+    frca->AddSuffix(re_str,re_str.size(),false);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << frca->ToString() << endl;

@@ -5,12 +5,19 @@
 
 using namespace std;
 
-string PrintSuffixes(const set<int> suffixes) // {{{
+string PrintSuffixes(const set<int> suffixes, const set<int> productive_suffixes) // {{{
 { stringstream out;
   out << "{";
   for (set<int>::const_iterator it=suffixes.begin(); it!=suffixes.end(); ++it)
   {
     if (it!=suffixes.begin())
+      out << ", ";
+    out << *it;
+  }
+  out << "/";
+  for (set<int>::const_iterator it=productive_suffixes.begin(); it!=productive_suffixes.end(); ++it)
+  {
+    if (it!=productive_suffixes.begin())
       out << ", ";
     out << *it;
   }
@@ -47,21 +54,26 @@ FRCA::~FRCA() // {{{
 } // }}}
 
 bool FRCA::Accept() const // {{{
-{ return HasSuffix(0);
+{ return HasSuffix(0,false);
 } // }}}
-BitCode FRCA::Compress(int &pos) const // {{{
+BitCode FRCA::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
   throw (string)"Error: No Match";
 } // }}}
 string FRCA::ToString() const // {{{
-{ return PrintSuffixes(mySuffixes) + "0";
+{ return PrintSuffixes(mySuffixes,myProductiveSuffixes) + "0";
 } // }}}
-vector<int> FRCA::AddSuffix(const string &s, int pos) // {{{
-{ vector<int> result;
+vector<worklistitem> FRCA::AddSuffix(const string &s, int pos, bool productive) // {{{
+{ vector<worklistitem> result;
   return result;
 } // }}}
-bool FRCA::HasSuffix(int pos) const // {{{
-{ return mySuffixes.find(pos)!=mySuffixes.end();
+bool FRCA::HasSuffix(int pos, bool onlyProductive) const // {{{
+{ if (myProductiveSuffixes.find(pos)!=myProductiveSuffixes.end())
+    return true;
+  else if (onlyProductive)
+    return false;
+  else
+    return mySuffixes.find(pos)!=mySuffixes.end();
 } // }}}
 int FRCA::MaxSuffix() const // {{{
 { if (mySuffixes.size()>0)
@@ -75,21 +87,27 @@ FRCA_One::FRCA_One() // {{{
 FRCA_One::~FRCA_One() // {{{
 {
 } // }}}
-BitCode FRCA_One::Compress(int &pos) const // {{{
+BitCode FRCA_One::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
-  if (HasSuffix(pos))
+  if (HasSuffix(pos,productive))
     return BitCode();
   else
     throw (string)"Error: No Match";
 } // }}}
 string FRCA_One::ToString() const // {{{
-{ return PrintSuffixes(mySuffixes) + "1";
+{ return PrintSuffixes(mySuffixes,myProductiveSuffixes) + "1";
 } // }}}
-vector<int> FRCA_One::AddSuffix(const string &s, int pos) // {{{
-{ vector<int> result;
-  if (not HasSuffix(pos))
-  { mySuffixes.insert(pos);
-    result.push_back(pos);
+vector<worklistitem> FRCA_One::AddSuffix(const string &s, int pos, bool productive) // {{{
+{ vector<worklistitem> result;
+  if (not HasSuffix(pos,productive))
+  { if (productive)
+      myProductiveSuffixes.insert(pos);
+    else
+      mySuffixes.insert(pos);
+    worklistitem item;
+    item.pos=pos;
+    item.productive=productive;
+    result.push_back(item);
   }
   return result;
 } // }}}
@@ -101,9 +119,9 @@ FRCA_Char::FRCA_Char(char ch) // {{{
 FRCA_Char::~FRCA_Char() // {{{
 {
 } // }}}
-BitCode FRCA_Char::Compress(int &pos) const // {{{
+BitCode FRCA_Char::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
-  if (HasSuffix(pos))
+  if (HasSuffix(pos,productive))
   { ++pos;
     return BitCode();
   }
@@ -112,7 +130,7 @@ BitCode FRCA_Char::Compress(int &pos) const // {{{
 } // }}}
 string FRCA_Char::ToString() const // {{{
 {
-  string s=PrintSuffixes(mySuffixes);
+  string s=PrintSuffixes(mySuffixes,myProductiveSuffixes);
   switch (myChar)
   { case '(':
       s+="\\(";
@@ -131,12 +149,15 @@ string FRCA_Char::ToString() const // {{{
   }
   return s;
 } // }}}
-vector<int> FRCA_Char::AddSuffix(const string &s, int pos) // {{{
-{ vector<int> result;
+vector<worklistitem> FRCA_Char::AddSuffix(const string &s, int pos, bool productive) // {{{
+{ vector<worklistitem> result;
   if (pos>0 && s[pos-1]==myChar)
-  { if (not HasSuffix(pos-1))
-    { mySuffixes.insert(pos-1);
-      result.push_back(pos-1);
+  { if (not HasSuffix(pos-1,productive))
+    { myProductiveSuffixes.insert(pos-1);
+      worklistitem item;
+      item.pos=pos-1;
+      item.productive=true;
+      result.push_back(item);
     }
   }
   return result;
@@ -153,11 +174,13 @@ FRCA_Seq::~FRCA_Seq() // {{{
 { delete myLeft;
   delete myRight;
 } // }}}
-BitCode FRCA_Seq::Compress(int &pos) const // {{{
+BitCode FRCA_Seq::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
-  if (HasSuffix(pos))
-  { BitCode v1 = myLeft->Compress(pos);
-    BitCode v2 = myRight->Compress(pos);
+  if (HasSuffix(pos,productive))
+  { int origpos=pos;
+    BitCode v1 = myLeft->Compress(pos,productive);
+    bool productive2=origpos==pos?productive:false;
+    BitCode v2 = myRight->Compress(pos,productive2);
     v1.Append(v2);
     return v1;
   }
@@ -165,16 +188,19 @@ BitCode FRCA_Seq::Compress(int &pos) const // {{{
     throw (string)"Error: No Match";
 } // }}}
 string FRCA_Seq::ToString() const // {{{
-{ return PrintSuffixes(mySuffixes) + "(" + myLeft->ToString() + ")(" + myRight->ToString() + ")";
+{ return PrintSuffixes(mySuffixes,myProductiveSuffixes) + "(" + myLeft->ToString() + ")(" + myRight->ToString() + ")";
 } // }}}
-vector<int> FRCA_Seq::AddSuffix(const string &s, int pos) // {{{
-{ vector<int> result;
-  vector<int> result1 = myRight->AddSuffix(s,pos);
-  for (vector<int>::const_iterator it1=result1.begin();it1!=result1.end();++it1)
-  { vector<int> result2=myLeft->AddSuffix(s,*it1);
-    for (vector<int>::const_iterator it2=result2.begin();it2!=result2.end();++it2)
-    { if (not HasSuffix(*it2))
-      { mySuffixes.insert(*it2);
+vector<worklistitem> FRCA_Seq::AddSuffix(const string &s, int pos, bool productive) // {{{
+{ vector<worklistitem> result;
+  vector<worklistitem> result1 = myRight->AddSuffix(s,pos,productive);
+  for (vector<worklistitem>::const_iterator it1=result1.begin();it1!=result1.end();++it1)
+  { vector<worklistitem> result2=myLeft->AddSuffix(s,it1->pos,it1->productive);
+    for (vector<worklistitem>::const_iterator it2=result2.begin();it2!=result2.end();++it2)
+    { if (not HasSuffix(it2->pos,it2->productive))
+      { if (it2->productive)
+          myProductiveSuffixes.insert(it2->pos);
+        else
+          mySuffixes.insert(it2->pos);
         result.push_back(*it2);
       }
     }
@@ -196,40 +222,46 @@ FRCA_Sum::~FRCA_Sum() // {{{
 { delete myLeft;
   delete myRight;
 } // }}}
-BitCode FRCA_Sum::Compress(int &pos) const // {{{
+BitCode FRCA_Sum::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
-  if (myLeft->HasSuffix(pos))
+  if (myLeft->HasSuffix(pos,productive))
   { BitCode result;
     result.PushBit(BitCode::INL);
-    result.Append(myLeft->Compress(pos));
+    result.Append(myLeft->Compress(pos,productive));
     return result;
   }
-  else if (myRight->HasSuffix(pos))
+  else if (myRight->HasSuffix(pos,productive))
   { BitCode result;
     result.PushBit(BitCode::INR);
-    result.Append(myRight->Compress(pos));
+    result.Append(myRight->Compress(pos,productive));
     return result;
   }
   else
     throw (string)"Error: No Match";
 } // }}}
 string FRCA_Sum::ToString() const // {{{
-{ return PrintSuffixes(mySuffixes)
+{ return PrintSuffixes(mySuffixes,myProductiveSuffixes)
        + "(" + myLeft->ToString() + ")+(" + myRight->ToString() + ")";
 } // }}}
-vector<int> FRCA_Sum::AddSuffix(const string &s, int pos) // {{{
-{ vector<int> result;
-  vector<int> result1=myLeft->AddSuffix(s,pos);
-  vector<int> result2=myRight->AddSuffix(s,pos);
-  for (vector<int>::const_iterator it=result1.begin();it!=result1.end();++it)
-  { if (not HasSuffix(*it))
-    { mySuffixes.insert(*it);
+vector<worklistitem> FRCA_Sum::AddSuffix(const string &s, int pos, bool productive) // {{{
+{ vector<worklistitem> result;
+  vector<worklistitem> result1=myLeft->AddSuffix(s,pos,productive);
+  vector<worklistitem> result2=myRight->AddSuffix(s,pos,productive);
+  for (vector<worklistitem>::const_iterator it=result1.begin();it!=result1.end();++it)
+  { if (not HasSuffix(it->pos,it->productive))
+    { if (it->productive)
+        myProductiveSuffixes.insert(it->pos);
+      else
+        mySuffixes.insert(it->pos);
       result.push_back(*it);
     }
   }
-  for (vector<int>::const_iterator it=result2.begin();it!=result2.end();++it)
-  { if (not HasSuffix(*it))
-    { mySuffixes.insert(*it);
+  for (vector<worklistitem>::const_iterator it=result2.begin();it!=result2.end();++it)
+  { if (not HasSuffix(it->pos,it->productive))
+    { if (it->productive)
+        myProductiveSuffixes.insert(it->pos);
+      else
+        mySuffixes.insert(it->pos);
       result.push_back(*it);
     }
   }
@@ -249,16 +281,16 @@ FRCA_Star::~FRCA_Star() // {{{
 {
   delete mySub;
 } // }}}
-BitCode FRCA_Star::Compress(int &pos) const // {{{
+BitCode FRCA_Star::Compress(int &pos, bool productive) const // {{{
 { //cout << "Pos: " << pos << "FRCA: " << ToString() << endl;
-  if (not HasSuffix(pos))
+  if (not HasSuffix(pos,productive))
     throw (string)"Error: No Match";
   BitCode result;
   int old_pos=pos;
-  while (mySub->HasSuffix(pos))
+  while (mySub->HasSuffix(pos,true))
   {
     result.PushBit(BitCode::CONS);
-    result.Append(mySub->Compress(pos));
+    result.Append(mySub->Compress(pos,true));
     if (pos == old_pos)
       throw (string)"Error: Infinite loop";
   }
@@ -266,22 +298,28 @@ BitCode FRCA_Star::Compress(int &pos) const // {{{
   return result;
 } // }}}
 string FRCA_Star::ToString() const // {{{
-{ return PrintSuffixes(mySuffixes) + "(" + mySub->ToString() + ")*";
+{ return PrintSuffixes(mySuffixes,myProductiveSuffixes) + "(" + mySub->ToString() + ")*";
 } // }}}
-vector<int> FRCA_Star::AddSuffix(const string &s, int pos) // {{{
+vector<worklistitem> FRCA_Star::AddSuffix(const string &s, int pos, bool productive) // {{{
 {
-  vector<int> result;
-  vector<int> workset;
-  workset.push_back(pos);
+  vector<worklistitem> result;
+  vector<worklistitem> workset;
+  worklistitem startitem;
+  startitem.pos=pos;
+  startitem.productive=productive;
+  workset.push_back(startitem);
   while (workset.size()>0)
   {
-    int cur_pos = workset.back();
+    worklistitem item = workset.back();
     workset.pop_back();
-    if (not HasSuffix(cur_pos))
-    { mySuffixes.insert(cur_pos);
-      result.push_back(cur_pos);
-      vector<int> result1=mySub->AddSuffix(s,cur_pos);
-      workset.insert(workset.end(),result1.begin(),result1.end());
+    if (not HasSuffix(item.pos,item.productive))
+    { if (item.productive)
+        myProductiveSuffixes.insert(item.pos);
+      else
+        mySuffixes.insert(item.pos);
+      result.push_back(item);
+      vector<worklistitem> subResult=mySub->AddSuffix(s,item.pos,false);
+      workset.insert(workset.end(),subResult.begin(),subResult.end());
     }
   }
   return result;
