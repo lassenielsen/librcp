@@ -800,26 +800,34 @@ int main(int argc, char **argv)
   } // }}}
   else if (re_method=="frca") // {{{
   { double c_1=gettime();
-    FRCA *frca=FRCA::Create(re, re_str.size());
-    frca->AddSuffix(re_str,re_str.size(),false);
+    FRCA *frca=FRCA::Create(re);
     double c_2=gettime();
     if (re_cmd=="print")
-    { cout << frca->ToString() << endl;
+    { frca->MarkSuffix(re_str,re_str.size(),false);
+      frca->MarkPrefix(re_str,0,false);
+      cout << frca->ToString() << endl;
       return 0;
     }
     else if (re_cmd=="accept")
-    { cout << frca->Accept() << endl;
+    { frca->MarkSuffix(re_str,re_str.size(),false);
+      cout << frca->Accept() << endl;
       return 0;
     }
-    else if (re_cmd=="compress")
-    { int pos=0;
-      cout << frca->Compress(pos).ToString() << endl;
+    else if (re_cmd=="compress" || re_cmd=="compress_gl")
+    { frca->MarkSuffix(re_str,re_str.size(),false);
+      int pos=0;
+      cout << frca->CompressGL(pos).ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress_ll")
+    { cout << frca->CompressLL(re_str,0,re_str.size()).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")
     { double t_1=gettime();
+      frca->MarkSuffix(re_str,re_str.size(),false);
       int pos=0;
-      frca->Compress(pos);
+      frca->CompressGL(pos);
       double t_2=gettime();
       if (n>=0)
         cout << n << " ";
