@@ -159,6 +159,15 @@ set<int> FRCA::GetPrefixes() const // {{{
   result.insert(myProductivePrefixes.begin(),myProductivePrefixes.end());
   return result;
 } // }}}
+FRCA *FRCA::Copy() const // {{{
+{
+  FRCA *result = new FRCA();
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
+  return result;
+} // }}}
 
 FRCA_One::FRCA_One() // {{{
 {
@@ -203,6 +212,15 @@ vector<worklistitem> FRCA_One::MarkPrefix(const string &s, int pos, bool product
     item.productive=productive;
     result.push_back(item);
   }
+  return result;
+} // }}}
+FRCA_One *FRCA_One::Copy() const // {{{
+{
+  FRCA_One *result=new FRCA_One();
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
   return result;
 } // }}}
 
@@ -274,6 +292,15 @@ vector<worklistitem> FRCA_Char::MarkPrefix(const string &s, int pos, bool produc
       result.push_back(item);
     }
   }
+  return result;
+} // }}}
+FRCA_Char *FRCA_Char::Copy() const // {{{
+{
+  FRCA_Char *result=new FRCA_Char(GetChar());
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
   return result;
 } // }}}
 char FRCA_Char::GetChar() const // {{{
@@ -376,6 +403,15 @@ void FRCA_Seq::ClearPrefixes() // {{{
   myProductivePrefixes.clear();
   myLeft->ClearPrefixes();
   myRight->ClearPrefixes();
+} // }}}
+FRCA_Seq *FRCA_Seq::Copy() const // {{{
+{
+  FRCA_Seq *result=new FRCA_Seq(myLeft->Copy(), myRight->Copy());
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
+  return result;
 } // }}}
 const FRCA &FRCA_Seq::GetFront() const // {{{
 { return *myLeft;
@@ -480,6 +516,15 @@ void FRCA_Sum::ClearPrefixes() // {{{
   myLeft->ClearPrefixes();
   myRight->ClearPrefixes();
 } // }}}
+FRCA_Sum *FRCA_Sum::Copy() const // {{{
+{
+  FRCA_Sum *result=new FRCA_Sum(myLeft->Copy(), myRight->Copy());
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
+  return result;
+} // }}}
 const FRCA &FRCA_Sum::GetLeft() const // {{{
 { return *myLeft;
 } // }}}
@@ -517,7 +562,7 @@ BitCode FRCA_Star::CompressLL(const string &s, int pos1, int pos2) // {{{
   { result.PushBit(BitCode::NIL);
     return result;
   }
-
+  // Find split between a single iteration (from left) and any number of iterations (from right)
   MarkSuffix(s,pos2,true);
   ClearPrefixes();
   mySub->MarkPrefix(s,pos1,true);
@@ -525,15 +570,12 @@ BitCode FRCA_Star::CompressLL(const string &s, int pos1, int pos2) // {{{
   if (split<0)
     throw (string)"Error: No Match";
   result.PushBit(BitCode::CONS);
-  // Copy FRCA with marks before clearing
-  set<int>cpySuffixes=mySuffixes;
-  set<int>cpyProductiveSuffixes=myProductiveSuffixes;
-  ClearSuffixes();
-  result.Append(mySub->CompressLL(s,pos1,split));
-  // Clear prefixes and restore suffixes
+  FRCA *cpySub = mySub->Copy();
+  cpySub->ClearSuffixes();
+  result.Append(cpySub->CompressLL(s,pos1,split));
+  delete cpySub;
+  // Clear prefixes compress remaining with the found suffixes
   ClearPrefixes();
-  mySuffixes=cpySuffixes;
-  myProductiveSuffixes=cpyProductiveSuffixes;
   result.Append(CompressLL(s,split,pos2));
   return result;
 } // }}}
@@ -591,6 +633,15 @@ void FRCA_Star::ClearPrefixes() // {{{
 { myPrefixes.clear();
   myProductivePrefixes.clear();
   mySub->ClearPrefixes();
+} // }}}
+FRCA_Star *FRCA_Star::Copy() const // {{{
+{
+  FRCA_Star *result=new FRCA_Star(mySub->Copy());
+  result->myPrefixes = myPrefixes;
+  result->myProductivePrefixes = myProductivePrefixes;
+  result->mySuffixes = mySuffixes;
+  result->myProductiveSuffixes = myProductiveSuffixes;
+  return result;
 } // }}}
 const FRCA &FRCA_Star::GetSub() const // {{{
 { return *mySub;

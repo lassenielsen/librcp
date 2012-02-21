@@ -51,6 +51,8 @@ class FRCA // Represents 0 {{{
     int MaxSuffix() const;
     int MaxPrefix() const;
 
+    virtual FRCA *Copy() const;
+
   protected:
     std::set<int> myPrefixes;
     std::set<int> myProductivePrefixes;
@@ -67,6 +69,7 @@ class FRCA_One : public FRCA // Represents 1 {{{
     virtual std::string ToString() const;
     virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+    virtual FRCA_One *Copy() const;
 }; // }}}
 class FRCA_Char : public FRCA // Represents a {{{
 { public:
@@ -78,6 +81,7 @@ class FRCA_Char : public FRCA // Represents a {{{
     virtual std::string ToString() const;
     virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+    virtual FRCA_Char *Copy() const;
 
     char GetChar() const;
 
@@ -96,6 +100,7 @@ class FRCA_Seq : public FRCA // Represents R1xR2 {{{
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
+    virtual FRCA_Seq *Copy() const;
 
     const FRCA &GetFront() const;
     const FRCA &GetBack() const;
@@ -116,6 +121,7 @@ class FRCA_Sum : public FRCA // Represents R1+R2 {{{
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
+    virtual FRCA_Sum *Copy() const;
 
     const FRCA &GetLeft() const;
     const FRCA &GetRight() const;
@@ -136,6 +142,7 @@ class FRCA_Star : public FRCA // Represents R1* {{{
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
+    virtual FRCA_Star *Copy() const;
 
     const FRCA &GetSub() const;
 
