@@ -809,25 +809,20 @@ int main(int argc, char **argv)
       return 0;
     }
     else if (re_cmd=="accept")
-    { frca->MarkSuffix(re_str,re_str.size(),false);
-      cout << frca->Accept() << endl;
+    { cout << frca->Accept(re_str) << endl;
       return 0;
     }
     else if (re_cmd=="compress" || re_cmd=="compress_gl")
-    { frca->MarkSuffix(re_str,re_str.size(),false);
-      int pos=0;
-      cout << frca->CompressGL(pos).ToString() << endl;
+    { cout << frca->CompressGL(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="compress_ll")
-    { cout << frca->CompressLL(re_str,0,re_str.size()).ToString() << endl;
+    { cout << frca->CompressLL(re_str).ToString() << endl;
       return 0;
     }
     else if (re_cmd=="time")
     { double t_1=gettime();
-      frca->MarkSuffix(re_str,re_str.size(),false);
-      int pos=0;
-      frca->CompressGL(pos);
+      frca->CompressGL(re_str);
       double t_2=gettime();
       if (n>=0)
         cout << n << " ";

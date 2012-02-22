@@ -31,11 +31,16 @@ class FRCA // Represents 0 {{{
     // Create a FRCA which can parse a string of length size
     FRCA();
     virtual ~FRCA();
-    bool Accept() const;
-    virtual BitCode CompressGL(int &pos, bool productive=false) const;
-    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     virtual std::string ToString() const;
     static FRCA *Create(const RE *exp);
+    bool Accept(const std::string &s);
+    BitCode CompressGL(const std::string &s);
+    BitCode CompressLL(const std::string &s);
+
+    virtual FRCA *Copy() const;
+
+    virtual BitCode CompressGL(int &pos, bool productive=false) const;
+    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     // Manage position marks // Returns all new markings produced by the given position
     virtual std::vector<worklistitem> MarkSuffix(const std::string &s, int pos, bool productive);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &s, int pos, bool productive);
@@ -51,9 +56,8 @@ class FRCA // Represents 0 {{{
     int MaxSuffix() const;
     int MaxPrefix() const;
 
-    virtual FRCA *Copy() const;
-
   protected:
+  // not private: used by ToString of derived classes
     std::set<int> myPrefixes;
     std::set<int> myProductivePrefixes;
     std::set<int> mySuffixes;
@@ -64,28 +68,30 @@ class FRCA_One : public FRCA // Represents 1 {{{
     FRCA_One();
     virtual ~FRCA_One();
     
+    virtual std::string ToString() const;
+    virtual FRCA_One *Copy() const;
+
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
-    virtual std::string ToString() const;
     virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
-    virtual FRCA_One *Copy() const;
 }; // }}}
 class FRCA_Char : public FRCA // Represents a {{{
 { public:
     FRCA_Char(char ch);
     virtual ~FRCA_Char();
 
-    virtual BitCode CompressGL(int &pos, bool productive=false) const;
-    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     virtual std::string ToString() const;
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
-    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual FRCA_Char *Copy() const;
 
     char GetChar() const;
 
-  private:
+    virtual BitCode CompressGL(int &pos, bool productive=false) const;
+    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+
+  protected:
     char myChar;
 }; // }}}
 class FRCA_Seq : public FRCA // Represents R1xR2 {{{
@@ -93,19 +99,20 @@ class FRCA_Seq : public FRCA // Represents R1xR2 {{{
     FRCA_Seq(FRCA *left, FRCA *right);
     virtual ~FRCA_Seq();
 
-    virtual BitCode CompressGL(int &pos, bool productive=false) const;
-    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     virtual std::string ToString() const;
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
-    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
-    virtual void ClearSuffixes();
-    virtual void ClearPrefixes();
     virtual FRCA_Seq *Copy() const;
 
     const FRCA &GetFront() const;
     const FRCA &GetBack() const;
 
-  private:
+    virtual BitCode CompressGL(int &pos, bool productive=false) const;
+    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+    virtual void ClearSuffixes();
+    virtual void ClearPrefixes();
+
+  protected:
     FRCA *myLeft;
     FRCA *myRight;
 }; // }}}
@@ -114,19 +121,20 @@ class FRCA_Sum : public FRCA // Represents R1+R2 {{{
     FRCA_Sum(FRCA *left, FRCA *right);
     virtual ~FRCA_Sum();
 
-    virtual BitCode CompressGL(int &pos, bool productive=false) const;
-    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     virtual std::string ToString() const;
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
-    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
-    virtual void ClearSuffixes();
-    virtual void ClearPrefixes();
     virtual FRCA_Sum *Copy() const;
 
     const FRCA &GetLeft() const;
     const FRCA &GetRight() const;
 
-  private:
+    virtual BitCode CompressGL(int &pos, bool productive=false) const;
+    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+    virtual void ClearSuffixes();
+    virtual void ClearPrefixes();
+
+  protected:
     FRCA *myLeft;
     FRCA *myRight;
 }; // }}}
@@ -135,18 +143,19 @@ class FRCA_Star : public FRCA // Represents R1* {{{
     FRCA_Star(FRCA *sub);
     virtual ~FRCA_Star();
 
-    virtual BitCode CompressGL(int &pos, bool productive=false) const;
-    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
     virtual std::string ToString() const;
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
-    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
-    virtual void ClearSuffixes();
-    virtual void ClearPrefixes();
     virtual FRCA_Star *Copy() const;
 
     const FRCA &GetSub() const;
 
-  private:
+    virtual BitCode CompressGL(int &pos, bool productive=false) const;
+    virtual BitCode CompressLL(const std::string &s, int pos1, int pos2);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
+    virtual void ClearSuffixes();
+    virtual void ClearPrefixes();
+
+  protected:
     FRCA *mySub;
 }; // }}}
 

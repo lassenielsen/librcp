@@ -68,8 +68,22 @@ FRCA::~FRCA() // {{{
 {
 } // }}}
 
-bool FRCA::Accept() const // {{{
-{ return HasSuffix(0,false);
+bool FRCA::Accept(const string &s) // {{{
+{ ClearSuffixes();
+  MarkSuffix(s,s.size(),true);
+  return HasSuffix(0,false);
+} // }}}
+BitCode FRCA::CompressGL(const string &s) // {{{
+{ ClearPrefixes();
+  ClearSuffixes();
+  MarkSuffix(s,s.size(),true);
+  int pos=0;
+  return CompressGL(pos,false);
+} // }}}
+BitCode FRCA::CompressLL(const string &s) // {{{
+{ ClearPrefixes();
+  ClearSuffixes();
+  return CompressLL(s,0,s.size());
 } // }}}
 BitCode FRCA::CompressGL(int &pos, bool productive) const // {{{
 {
