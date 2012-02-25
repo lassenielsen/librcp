@@ -83,13 +83,15 @@ BitCode FRCA::CompressGL(const string &s) // {{{
 BitCode FRCA::CompressLL(const string &s) // {{{
 { ClearPrefixes();
   ClearSuffixes();
-  return CompressLL(s,0,s.size());
+  BitCode result;
+  CompressLL(s,0,s.size(),result);
+  return result;
 } // }}}
 BitCode FRCA::CompressGL(int &pos, bool productive) const // {{{
 {
   throw (string)"Error: No Match";
 } // }}}
-BitCode FRCA::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
   throw (string)"Error: No Match";
 } // }}}
@@ -196,11 +198,9 @@ BitCode FRCA_One::CompressGL(int &pos, bool productive) const // {{{
   else
     throw (string)"Error: No Match";
 } // }}}
-BitCode FRCA_One::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA_One::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 { 
-  if (pos1==pos2)
-    return BitCode();
-  else
+  if (pos1!=pos2)
     throw (string)"Error: No Match";
 } // }}}
 string FRCA_One::ToString() const // {{{
@@ -254,11 +254,9 @@ BitCode FRCA_Char::CompressGL(int &pos, bool productive) const // {{{
   else
     throw (string)"Error: No Match";
 } // }}}
-BitCode FRCA_Char::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA_Char::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
-  if (pos2==pos1+1 && s[pos1]==myChar)
-    return BitCode();
-  else
+  if (pos2!=pos1+1 || s[pos1]!=myChar)
     throw (string)"Error: No Match";
 } // }}}
 string FRCA_Char::ToString() const // {{{
@@ -362,7 +360,7 @@ int max_common(const set<int> &set1, const set<int> &set2)
   }
   return result;
 } // }}}
-BitCode FRCA_Seq::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA_Seq::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
   myLeft->MarkPrefix(s,pos1,true);
   myRight->MarkSuffix(s,pos2,true);
@@ -371,9 +369,8 @@ BitCode FRCA_Seq::CompressLL(const string &s, int pos1, int pos2) // {{{
   int split=max_common(splitLeft,splitRight);
   if (split<0)
     throw (string)"Error: No Match";
-  BitCode result=myLeft->CompressLL(s,pos1,split);
-  result.Append(myRight->CompressLL(s,split,pos2));
-  return result;
+  myLeft->CompressLL(s,pos1,split,dest);
+  myRight->CompressLL(s,split,pos2,dest);
 } // }}}
 string FRCA_Seq::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes) + "(" + myLeft->ToString() + ")(" + myRight->ToString() + ")";
@@ -459,21 +456,19 @@ BitCode FRCA_Sum::CompressGL(int &pos, bool productive) const // {{{
   else
     throw (string)"Error: No Match";
 } // }}}
-BitCode FRCA_Sum::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA_Sum::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
   myLeft->MarkSuffix(s,pos2,true);
   myRight->MarkSuffix(s,pos2,true);
   if (myLeft->HasSuffix(pos1,false))
-  { BitCode result;
-    result.PushBit(BitCode::INL);
-    result.Append(myLeft->CompressLL(s,pos1,pos2));
-    return result;
+  { dest.PushBit(BitCode::INL);
+    myLeft->CompressLL(s,pos1,pos2,dest);
+    return;
   }
   else if (myRight->HasSuffix(pos1,false))
-  { BitCode result;
-    result.PushBit(BitCode::INR);
-    result.Append(myRight->CompressLL(s,pos1,pos2));
-    return result;
+  { dest.PushBit(BitCode::INR);
+    myRight->CompressLL(s,pos1,pos2,dest);
+    return;
   }
   else
     throw (string)"Error: No Match";
@@ -569,12 +564,11 @@ BitCode FRCA_Star::CompressGL(int &pos, bool productive) const // {{{
   result.PushBit(BitCode::NIL);
   return result;
 } // }}}
-BitCode FRCA_Star::CompressLL(const string &s, int pos1, int pos2) // {{{
+void FRCA_Star::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
-  BitCode result;
   if (pos1==pos2)
-  { result.PushBit(BitCode::NIL);
-    return result;
+  { dest.PushBit(BitCode::NIL);
+    return;
   }
   // Find split between a single iteration (from left) and any number of iterations (from right)
   MarkSuffix(s,pos2,true);
@@ -583,15 +577,14 @@ BitCode FRCA_Star::CompressLL(const string &s, int pos1, int pos2) // {{{
   int split=max_common(mySub->GetPrefixes(),GetSuffixes());
   if (split<0)
     throw (string)"Error: No Match";
-  result.PushBit(BitCode::CONS);
+  dest.PushBit(BitCode::CONS);
   FRCA *cpySub = mySub->Copy();
   cpySub->ClearSuffixes();
-  result.Append(cpySub->CompressLL(s,pos1,split));
+  cpySub->CompressLL(s,pos1,split,dest);
   delete cpySub;
   // Clear prefixes compress remaining with the found suffixes
   ClearPrefixes();
-  result.Append(CompressLL(s,split,pos2));
-  return result;
+  CompressLL(s,split,pos2,dest);
 } // }}}
 string FRCA_Star::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes) + "(" + mySub->ToString() + ")*";
