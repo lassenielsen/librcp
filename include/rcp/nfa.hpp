@@ -71,14 +71,14 @@ class NFA // {{{
     // Thompson simulation based parsing
     // Not as efficient as DFASIM, but returns the least bitcode for the given ordering.
     // This enables greedy-leftmost and longest-leftmost disambiguations
-    BitCode Thompson(const std::string &s, const BCOrder &order) const;
+    BitCode Thompson(const std::string &s, const BCCInitState init, const BCComparer leq) const;
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s) const;
     // Find the epsilon-closure of a set of nodes in the NFA
     // The structure of the elementa are (dest,(output,source))
     void Closure(std::map<int,std::pair<std::string,int> > &nodes) const;
-    void Closure(std::map<int,BitCode> &nodes, const BCOrder &order) const;
+    void Closure(std::map<int,BitCode> &nodes, const BCCInitState init, const BCComparer leq) const;
     // ToString prints the NFA in the dot format for easy debugging
     std::string ToString();
 

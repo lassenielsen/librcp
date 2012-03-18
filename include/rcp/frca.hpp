@@ -37,7 +37,7 @@ class FRCA // Represents 0 {{{
     BitCode CompressGL(const std::string &s);
     BitCode CompressLL(const std::string &s);
 
-    virtual FRCA *Copy() const;
+    virtual FRCA *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
@@ -69,7 +69,7 @@ class FRCA_One : public FRCA // Represents 1 {{{
     virtual ~FRCA_One();
     
     virtual std::string ToString() const;
-    virtual FRCA_One *Copy() const;
+    virtual FRCA_One *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
@@ -82,7 +82,7 @@ class FRCA_Char : public FRCA // Represents a {{{
     virtual ~FRCA_Char();
 
     virtual std::string ToString() const;
-    virtual FRCA_Char *Copy() const;
+    virtual FRCA_Char *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     char GetChar() const;
 
@@ -100,7 +100,7 @@ class FRCA_Seq : public FRCA // Represents R1xR2 {{{
     virtual ~FRCA_Seq();
 
     virtual std::string ToString() const;
-    virtual FRCA_Seq *Copy() const;
+    virtual FRCA_Seq *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     const FRCA &GetFront() const;
     const FRCA &GetBack() const;
@@ -122,7 +122,7 @@ class FRCA_Sum : public FRCA // Represents R1+R2 {{{
     virtual ~FRCA_Sum();
 
     virtual std::string ToString() const;
-    virtual FRCA_Sum *Copy() const;
+    virtual FRCA_Sum *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     const FRCA &GetLeft() const;
     const FRCA &GetRight() const;
@@ -144,7 +144,7 @@ class FRCA_Star : public FRCA // Represents R1* {{{
     virtual ~FRCA_Star();
 
     virtual std::string ToString() const;
-    virtual FRCA_Star *Copy() const;
+    virtual FRCA_Star *Copy(bool copyPrefixes=true, bool copySuffixes=true) const;
 
     const FRCA &GetSub() const;
 

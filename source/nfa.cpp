@@ -202,73 +202,73 @@ void NFA::Closure(std::map<int,std::pair<std::string,int> > &nodes) const // {{{
   }
   return;
 } // }}}
-void NFA::Closure(std::map<int,BitCode> &nodes, const BCOrder &order) const // {{{
-{
-  map<int,BitCode> tmpNodes=nodes;
-  // Continue while new nodes are found
-  while (tmpNodes.size()>0)
-  { // Consider the least node
-    map<int,BitCode>::iterator node=tmpNodes.begin();
-    // Consider each edge from that node
-    for (int edge=0; edge<myNodes[node->first].CountTransitions(); ++edge)
-    { 
-      BitCode code=node->second; // Source code
-      for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
-      { // Add extra bits
-        code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
-      }
-      // If epsilon-edge and creates better path, add it to the new nodes
-      if (myNodes[node->first].GetTransition(edge).GetInput()=="" &&
-          (nodes.find(myNodes[node->first].GetTransition(edge).GetDest())==nodes.end() ||
-	   order.LEQ(code,nodes.find(myNodes[node->first].GetTransition(edge).GetDest())->second) ) )
-      {
-        tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()]=code;
-        nodes[myNodes[node->first].GetTransition(edge).GetDest()]=tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()];
-      }
-    }
-    // Clear the considered node from tmpNodes
-    tmpNodes.erase(node);
-  }
-  return;
-} // }}}
-BitCode NFA::Thompson(const string &s, const BCOrder &order) const // {{{
-{
-  typedef map<int,BitCode> state;
-  state cur_state;
-  cur_state[0]=BitCode();
-  // Perform epsilon-closure
-  Closure(cur_state,order);
-  for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
-  { // Find direct edges
-    state next_state;
-    for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
-    { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
-      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 &&
-            GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
-        { // Create bitcode
-	  BitCode code=node->second; // Source code
-	  for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
-          { // Add extra bits
-            code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
-          }
-	  // Set state if better path is found
-	  if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end() ||
-	      order.LEQ(code,next_state.find(GetNode(node->first).GetTransition(edge).GetDest())->second))
-            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=code;
-        }
-      }
-    }
-    // Perform epsilon-closure
-    Closure(next_state,order);
-
-    cur_state=next_state;
-  }
-
-  for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
-    if (GetNode(node->first).Final())
-      return node->second;
-  throw (string)"Error: No Match";
-} // }}}
+//void NFA::Closure(std::map<int,BitCode> &nodes, const BCOrder &order) const // {{{
+//{
+//  map<int,BitCode> tmpNodes=nodes;
+//  // Continue while new nodes are found
+//  while (tmpNodes.size()>0)
+//  { // Consider the least node
+//    map<int,BitCode>::iterator node=tmpNodes.begin();
+//    // Consider each edge from that node
+//    for (int edge=0; edge<myNodes[node->first].CountTransitions(); ++edge)
+//    { 
+//      BitCode code=node->second; // Source code
+//      for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
+//      { // Add extra bits
+//        code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
+//      }
+//      // If epsilon-edge and creates better path, add it to the new nodes
+//      if (myNodes[node->first].GetTransition(edge).GetInput()=="" &&
+//          (nodes.find(myNodes[node->first].GetTransition(edge).GetDest())==nodes.end() ||
+//	   order.LEQ(code,nodes.find(myNodes[node->first].GetTransition(edge).GetDest())->second) ) )
+//      {
+//        tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()]=code;
+//        nodes[myNodes[node->first].GetTransition(edge).GetDest()]=tmpNodes[myNodes[node->first].GetTransition(edge).GetDest()];
+//      }
+//    }
+//    // Clear the considered node from tmpNodes
+//    tmpNodes.erase(node);
+//  }
+//  return;
+//} // }}}
+//BitCode NFA::Thompson(const string &s, const BCCInitState init, BCCComparer leq) const // {{{
+//{
+//  typedef map<int,BitCode> state;
+//  state cur_state;
+//  cur_state[0]=BitCode();
+//  // Perform epsilon-closure
+//  Closure(cur_state,order);
+//  for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
+//  { // Find direct edges
+//    state next_state;
+//    for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
+//    { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
+//      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 &&
+//            GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
+//        { // Create bitcode
+//	  BitCode code=node->second; // Source code
+//	  for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
+//          { // Add extra bits
+//            code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
+//          }
+//	  // Set state if better path is found
+//	  if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end() ||
+//	      order.LEQ(code,next_state.find(GetNode(node->first).GetTransition(edge).GetDest())->second))
+//            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=code;
+//        }
+//      }
+//    }
+//    // Perform epsilon-closure
+//    Closure(next_state,order);
+//
+//    cur_state=next_state;
+//  }
+//
+//  for (state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
+//    if (GetNode(node->first).Final())
+//      return node->second;
+//  throw (string)"Error: No Match";
+//} // }}}
 string NFA::ToString() // {{{
 {
   stringstream result;
