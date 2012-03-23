@@ -25,11 +25,11 @@ class BCCState_GL : public BCCState // {{{
   private:
     unsigned int myPosition;
 }; // }}}
-class BCCCallState_LL
+class BCCCallState_LL // {{{
 { public:
     RE *myRE;  // The sub expression at the current position
     int state; // Represents the state of the current subexpression (eg, did we call to the left or right sub-expression)
-};
+}; // }}}
 //class BCCState_LL : public BCCState_GL // {{{
 //{ public:
 //    BCCState_LL(unsigned int pos, std::vector<BCCCallState_LL>);
@@ -65,4 +65,21 @@ bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, BCCState *state);
 // Longest Leftmost disambiguation
 //BCCState *InitState_LL(RE *re);
 //bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState *state);
+
+/** Define the state of comparison memoization with usefull functionality
+  */
+class BCCStates // {{{
+{
+  public:
+    BCCStates(const BCCState &init_state, int nodes);
+    ~BCCStates();
+
+    void SetState(int x, int y, const BCCState &new_state);
+    void ShiftState(int source, int dest);
+    BCCState *GetState(int x, int y);
+
+  private:
+    std::map<int,std::map<int,BCCState*> > myStates;
+    int mySize;
+}; // }}}
 #endif

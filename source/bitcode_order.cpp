@@ -318,3 +318,54 @@ BCCState_GL *BCCState_GL::Copy() const // {{{
 {
   return new BCCState_GL(GetPosition());
 } // }}}
+
+/** Implementation of memoization state functionality
+  */
+BCCStates::BCCStates(const BCCState &init_state, int nodes) // {{{
+: mySize(nodes)
+{
+  for (int y=0;y<mySize; ++y)
+  for (int x=0;x<y; ++x)
+    myStates[x][y]=init_state.Copy();
+} // }}}
+BCCStates::~BCCStates() // {{{
+{
+  for (map<int,map<int,BCCState*> >::iterator it1=myStates.begin(); it1!=myStates.end(); ++it1)
+    for (map<int,BCCState*>::iterator it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+      delete it2->second;
+} // }}}
+void BCCStates::SetState(int x, int y, const BCCState &new_state) // {{{
+{
+  if (x==y || x>mySize || y > mySize)
+    throw (string)"BCCStates::SetState error: bad indices";
+
+  if (y<x)
+  { int tmp = x;
+    x=y;
+    y=tmp;
+  }
+  delete myStates[x][y];
+  myStates[x][y]=new_state.Copy();
+} // }}}
+void BCCStates::ShiftState(int source, int dest) // {{{
+{
+  for (int i=0; i<mySize; ++i)
+  {
+    if (i==source || i==dest)
+      continue;
+    SetState(dest,i,*GetState(source,i));
+  }
+} // }}}
+BCCState *BCCStates::GetState(int x, int y) // {{{
+{
+  if (x==y || x>mySize || y > mySize)
+    throw (string)"BCCStates::GetState error: bad indices";
+
+  if (y<x)
+  { int tmp = x;
+    x=y;
+    y=tmp;
+  }
+  return myStates[x][y];
+} // }}}
+
