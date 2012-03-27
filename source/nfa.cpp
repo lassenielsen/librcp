@@ -202,8 +202,8 @@ void NFA::Closure(std::map<int,std::pair<std::string,int> > &nodes) const // {{{
   }
   return;
 } // }}}
-template<T> bool vector_member(vector<T> collection, T element) // {{{
-{ for (vector<T>::const_iterator it = collection.begin(); it!=collection.end(); ++it)
+bool vector_member(vector<int> collection, int element) // {{{
+{ for (vector<int>::const_iterator it = collection.begin(); it!=collection.end(); ++it)
     if (element == *it)
       return true;
   return false;
@@ -230,22 +230,20 @@ void NFA::Closure(thompson_state &nodes, BCCStates &bccstates, BCComparer leq) c
         stack.pop_back();
       }
       else if (myNodes[node].GetTransition(edge).GetInput()=="" &&
-               vector_member(trace,myNodes[node].GetTransition(edge).GetDest()) // No cycles!
+               !vector_member(trace,myNodes[node].GetTransition(edge).GetDest()) // No cycles!
               ) // Try edge
       { int dest_node=myNodes[node].GetTransition(edge).GetDest();
         thompson_state::const_iterator dest = nodes.find(dest_node);
-        if (dest!=nodes.end()(
-        { BitCode code=stack.back().second;
-          for (int bit=0; bit<GetNode(node).GetTransition(edge).GetOutput().size(); ++bit)
-            code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1'); // Add bit to bitcode
-          if (leq(code,dest->second,bccstates.GetState(),bccstates.GetState(node,dest_node)))
-          { trace.push_back(dest_node);
-            stack.push_back(0);
-            nodes[dest_node]=code;
-            bccstates.ShiftState(node,dest_node);
-          }
+        BitCode code=nodes[node];
+        for (int bit=0; bit<GetNode(node).GetTransition(edge).GetOutput().size(); ++bit)
+          code.PushBit(GetNode(node).GetTransition(edge).GetOutput()[bit]=='1'); // Add bit to bitcode
+        if (dest==nodes.end() ||
+            leq(code,dest->second,bccstates.GetState(node,dest_node)))
+        { trace.push_back(dest_node);
+          stack.push_back(0);
+          nodes[dest_node]=code;
+          bccstates.ShiftState(node,dest_node);
         }
-        
       }
     }
   }
@@ -270,8 +268,9 @@ BitCode NFA::Thompson(const string &s, const BCCState &init_state, BCComparer le
 	  for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
             code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
 	  // Set state if better path is found
-	  if (next_state.find(GetNode(node->first).GetTransition(edge).GetDest())==next_state.end() ||
-	      leq(code,next_state.find(GetNode(node->first).GetTransition(edge).GetDest())->second),bccstates.GetState(node->first,GetNode(node->first).GetTransition(edge).GetDest()))
+          int dest_node=GetNode(node->first).GetTransition(edge).GetDest();
+	  if (next_state.find(dest_node)==next_state.end() ||
+	      leq(code,next_state.find(dest_node)->second,bccstates.GetState(node->first,dest_node)))
           {
             next_state[GetNode(node->first).GetTransition(edge).GetDest()]=code;
             bccstates.ShiftState(node->first,GetNode(node->first).GetTransition(edge).GetDest());
@@ -280,7 +279,7 @@ BitCode NFA::Thompson(const string &s, const BCCState &init_state, BCComparer le
       }
     }
     // Perform epsilon-closure
-    Closure(next_state,order);
+    Closure(next_state,bccstates,leq);
 
     cur_state=next_state;
   }
