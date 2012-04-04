@@ -9,26 +9,26 @@ class BCCState // {{{
 { public:
     BCCState();
     virtual ~BCCState();
-    virtual BCCState *Copy() const;
-
+    virtual bool LEQ_Answer() const;
   private:
 }; // }}}
 class BCCState_GL : public BCCState // {{{
 { public:
-    BCCState_GL(unsigned int pos);
+    BCCState_GL(int state);
     virtual ~BCCState_GL();
-    unsigned int GetPosition() const;
-    void SetPosition(unsigned int newPos);
 
-    virtual BCCState_GL *Copy() const;
+    bool LEQ_Answer() const;
 
   private:
-    unsigned int myPosition;
+    int state; // -1=less, 0=equal, 1=greater
 }; // }}}
-class BCCCallState_LL // {{{
+class BCCCallState_LL: public BCCState // {{{
 { public:
-    RE *myRE;  // The sub expression at the current position
-    int state; // Represents the state of the current subexpression (eg, did we call to the left or right sub-expression)
+    RE* lhsPos;
+    RE* rhsPos;
+    std::vector<RE*> commonStack;
+    unsigned int lhsPos;
+    unsigned int rhsPos;
 }; // }}}
 //class BCCState_LL : public BCCState_GL // {{{
 //{ public:
@@ -52,7 +52,7 @@ class BCCCallState_LL // {{{
   * BCLEQ_LL implements a lonest-leftmost ordering
   */
 typedef BCCState *(*BCCInitState)(RE *re);
-typedef bool (*BCComparer)(const BitCode &lhs, const BitCode &rhs, BCCState *state);
+typedef BCCState* (*BCComparer)(const string &lhs_cont, const string &rhs_cont, const BCCState &state);
 
 // Undefined disambiguation
 BCCState *InitState_NN(RE *re);
@@ -79,6 +79,7 @@ class BCCStates // {{{
     BCCState *GetState(int x, int y);
 
   private:
+    // A map from nodeid, edge id to the comparrison state
     std::map<int,std::map<int,BCCState*> > myStates;
     int mySize;
 }; // }}}

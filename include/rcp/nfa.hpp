@@ -54,7 +54,10 @@ class NFANode // {{{
   */
 class NFA // {{{
 { public:
-    typedef std::map<int,BitCode> thompson_state;
+    // The generalized thompson state holds a bitcode and an integer for each node in the state
+    // The bitcode holds the bits passed since the state of the previous string indes
+    // The integer defines the offset state from the previous string index
+    typedef std::map<int,std::pair<BitCode, int> > thompson_state;
 
     NFA(const RE &exp);
     virtual ~NFA();
