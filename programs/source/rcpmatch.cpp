@@ -388,7 +388,6 @@ int main(int argc, char **argv)
   else if (re_method=="nfa_thompson") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
-    BCCState *initstate=InitState_NN(re);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
@@ -396,7 +395,7 @@ int main(int argc, char **argv)
     }
     else if (re_cmd=="compress")
     { try
-      { BitCode result=nfa.Thompson(re_str,*initstate,BCLEQ_NN);
+      { BitCode result=nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
         cout << result.ToString() << endl;
       }
       catch (string s)
@@ -407,7 +406,7 @@ int main(int argc, char **argv)
     }
     else if (re_cmd=="time")
     { double t_1=gettime();
-      nfa.Thompson(re_str,*initstate,BCLEQ_NN);
+      nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
       double t_2=gettime();
       if (n>=0)
         cout << n << " ";
@@ -420,41 +419,79 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-//  else if (re_method=="nfa_thompson_gl") // {{{
-//  { double c_1=gettime();
-//    NFA nfa(*re);
-//    BCOrder_GL order;
-//    double c_2=gettime();
-//    if (re_cmd=="print")
-//    { cout << nfa.ToString() << endl;
-//      return 0;
-//    }
-//    else if (re_cmd=="compress")
-//    { try
-//      { BitCode result=nfa.Thompson(re_str,order);
-//        cout << result.ToString() << endl;
-//      }
-//      catch (string s)
-//      {
-//        cout << "Error: " << s << endl;
-//      }
-//      return 0;
-//    }
-//    else if (re_cmd=="time")
-//    { double t_1=gettime();
-//      nfa.Thompson(re_str,order);
-//      double t_2=gettime();
-//      if (n>=0)
-//        cout << n << " ";
-//      cout.precision(10);
-//      cout << c_2-c_1+t_2-t_1 << endl;
-//      return 0;
-//    }
-//    else
-//    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
-//      return 0;
-//    }
-//  } // }}}
+  else if (re_method=="nfa_thompson_reduce") // {{{
+  { double c_1=gettime();
+    NFA nfa(*re);
+    nfa.RemoveDeadStates();
+    nfa.MakeCompact();
+    nfa.RemoveUnreachableStates();
+    nfa.Reduce();
+    nfa.Explode();
+    double c_2=gettime();
+    if (re_cmd=="print")
+    { cout << nfa.ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
+    else if (re_cmd=="time")
+    { double t_1=gettime();
+      nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
+      double t_2=gettime();
+      if (n>=0)
+        cout << n << " ";
+      cout.precision(10);
+      cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else
+    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
+      return 0;
+    }
+  } // }}}
+  else if (re_method=="nfa_thompson_gl") // {{{
+  { double c_1=gettime();
+    NFA nfa(*re);
+    double c_2=gettime();
+    if (re_cmd=="print")
+    { cout << nfa.ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
+    else if (re_cmd=="time")
+    { double t_1=gettime();
+      nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+      double t_2=gettime();
+      if (n>=0)
+        cout << n << " ";
+      cout.precision(10);
+      cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else
+    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
+      return 0;
+    }
+  } // }}}
 //  else if (re_method=="nfa_thompson_ll") // {{{
 //  { double c_1=gettime();
 //    NFA nfa(*re);

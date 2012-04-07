@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include <typeinfo>
+#include <list>
 #include <algorithm>
 #include <rcp/common.hpp>
 using namespace std;
@@ -208,17 +209,22 @@ bool vector_member(vector<int> collection, int element) // {{{
       return true;
   return false;
 } // }}}
-void NFA::Closure(thompson_state &nodes, BCCStates &bccstates, BCComparer leq) const // {{{
+void PrintState(const NFA::thompson_state &state) // {{{
+{ cout << "State nodes:" << endl;
+  for (NFA::thompson_state::const_iterator it=state.begin(); it!=state.end(); ++it)
+    cout << it->first << " from " << it->second.second << ": " << it->second.first.ToString() << endl;
+} // }}}
+void NFA::Closure(thompson_state &state, BCCStates &bccstates, BCComparer leq) const // {{{
 {
-  thompson_state tmpNodes=nodes;
+  thompson_state tmpNodes=state;
   vector<int> trace; // Used to avoid epsilon-loops
-  vector<int> stack; // Used to keep track of the position at each step in the trace (associated bitcode is in nodes)
+  vector<int> stack; // Used to keep track of the position at each step in the trace (associated bitcode and source node is in state)
   // Continue while new nodes are found
   while (tmpNodes.size()>0 || trace.size()>0)
   { if (trace.size()==0)
     { trace.push_back(tmpNodes.begin()->first);
       stack.push_back(0);
-      // node already in nodes
+      // node already in state
       tmpNodes.erase(tmpNodes.begin());
     }
     else
@@ -233,60 +239,94 @@ void NFA::Closure(thompson_state &nodes, BCCStates &bccstates, BCComparer leq) c
                !vector_member(trace,myNodes[node].GetTransition(edge).GetDest()) // No cycles!
               ) // Try edge
       { int dest_node=myNodes[node].GetTransition(edge).GetDest();
-        thompson_state::const_iterator dest = nodes.find(dest_node);
-        BitCode code=nodes[node];
-        for (int bit=0; bit<GetNode(node).GetTransition(edge).GetOutput().size(); ++bit)
-          code.PushBit(GetNode(node).GetTransition(edge).GetOutput()[bit]=='1'); // Add bit to bitcode
-        if (dest==nodes.end() ||
-            leq(code,dest->second,bccstates.GetState(node,dest_node)))
+        thompson_state::const_iterator dest = state.find(dest_node);
+        BitCode code=state[node].first;
+        code.Append(GetNode(node).GetTransition(edge).GetOutput()); // Add bit to bitcode
+        // FIXME: null pointer exception here for BCLEQ_GL, re: aa+aaa str: aaaaa. WHY?
+        if (dest==state.end() ||
+            leq(code,dest->second.first,*bccstates[state[node].second][dest->second.second]))
         { trace.push_back(dest_node);
           stack.push_back(0);
-          nodes[dest_node]=code;
-          bccstates.ShiftState(node,dest_node);
+          // Update state with new source node and bitcode
+          state[dest_node]=pair<BitCode,int>(code,state[node].second);
         }
       }
     }
   }
   return;
 } // }}}
-BitCode NFA::Thompson(const string &s, const BCCState &init_state, BCComparer leq) const // {{{
+void UpdateBCCs(BCCStates &bcc_states, BCUpdater bcc_update, const NFA::thompson_state &deltas) // {{{
 {
-  thompson_state cur_state;
-  cur_state[0]=BitCode();
-  BCCStates bccstates(init_state,CountNodes());
+  BCCStates result;
+  // generate new state
+  for (NFA::thompson_state::const_iterator lhs=deltas.begin(); lhs!=deltas.end(); ++lhs)
+  for (NFA::thompson_state::const_iterator rhs=deltas.begin(); rhs!=deltas.end(); ++rhs)
+    result[lhs->first][rhs->first]=bcc_update(lhs->second.first,rhs->second.first,*bcc_states[lhs->second.second][rhs->second.second]);
+  // clean up old state
+  while (bcc_states.size()>0)
+  { while (bcc_states.begin()->second.size()>0)
+    { delete bcc_states.begin()->second.begin()->second;
+      bcc_states.begin()->second.erase(bcc_states.begin()->second.begin());
+    }
+    bcc_states.erase(bcc_states.begin());
+  }
+  bcc_states=result;
+} // }}}
+BitCode NFA::Thompson(const string &s, BCCState *bcc_init, BCComparer leq, BCUpdater bcc_update) const // {{{
+{
+  thompson_states states;
+  // Set starting point as initial node at index 0 (start of string).
+  states[0][0]=pair<BitCode,int>(BitCode(),0);
+  BCCStates bccstates;
+  bccstates[0][0]=bcc_init;
   // Perform epsilon-closure
-  Closure(cur_state,bccstates,leq);
-  for (int pos=0; pos<s.size() && !cur_state.empty(); ++pos)
+  Closure(states[0],bccstates,leq);
+  // Update state
+  UpdateBCCs(bccstates,bcc_update,states[0]);
+
+  for (int pos=0; pos<s.size() && !states[pos].empty(); ++pos)
   { // Find direct edges
-    thompson_state next_state;
-    for (thompson_state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
+    for (thompson_state::const_iterator node=states[pos].begin(); node!=states[pos].end(); ++node)
     { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
-      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 &&
+      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 && // ASSUME no multichar edges
             GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
         { // Create bitcode
-	  BitCode code=node->second; // Source code
-	  for (int bit=0; bit<GetNode(node->first).GetTransition(edge).GetOutput().size(); ++bit)
-            code.PushBit(GetNode(node->first).GetTransition(edge).GetOutput()[bit]=='1');
+	  BitCode code;
+          code.Append(GetNode(node->first).GetTransition(edge).GetOutput());
 	  // Set state if better path is found
           int dest_node=GetNode(node->first).GetTransition(edge).GetDest();
-	  if (next_state.find(dest_node)==next_state.end() ||
-	      leq(code,next_state.find(dest_node)->second,bccstates.GetState(node->first,dest_node)))
-          {
-            next_state[GetNode(node->first).GetTransition(edge).GetDest()]=code;
-            bccstates.ShiftState(node->first,GetNode(node->first).GetTransition(edge).GetDest());
+	  if (states[pos+1].find(dest_node)==states[pos+1].end() ||
+	      leq(code,
+                  states[pos+1].find(dest_node)->second.first,
+                  *bccstates[node->first][states[pos+1][dest_node].second]))
+          { // If better path found: update state
+            states[pos+1][dest_node]=pair<BitCode,int>(code,node->first);
           }
         }
       }
     }
     // Perform epsilon-closure
-    Closure(next_state,bccstates,leq);
-
-    cur_state=next_state;
+    Closure(states[pos+1],bccstates,leq);
+    // Update state
+    UpdateBCCs(bccstates,bcc_update,states[0]);
   }
 
-  for (thompson_state::const_iterator node=cur_state.begin(); node!=cur_state.end(); ++node)
-    if (GetNode(node->first).Final())
-      return node->second;
+  // Search for accepting state in end state
+  for (thompson_state::const_iterator node=states[s.size()].begin(); node!=states[s.size()].end(); ++node)
+    if (GetNode(node->first).Final()) // use for result
+    { // trace backwards
+      list<int> trace;
+      trace.push_front(node->first);
+      for (int i=s.size(); i>0; --i)
+        trace.push_front(states[i][trace.front()].second);
+      // Go through trace and build bitcode
+      BitCode result;
+      for (int i=0; i<=s.size(); ++i)
+      { result.Append(states[i][trace.front()].first);
+        trace.pop_front();
+      }
+      return result;
+    }
   throw (string)"Error: No Match";
 } // }}}
 string NFA::ToString() // {{{

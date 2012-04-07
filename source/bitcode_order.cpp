@@ -2,47 +2,95 @@
 #include <iostream>
 using namespace std;
 
-BCCState *InitState_NN(RE *re) // {{{
-{ return new BCCState();
+/***********************************************
+ ** Implementation of BCCState and subclasses **
+ ***********************************************/
+BCCState::BCCState() // {{{
+{
 } // }}}
-bool BCLEQ_NN(const BitCode &lhs, const BitCode &rhs, BCCState *state) // {{{
-{ return false;
+BCCState::~BCCState() // {{{
+{
 } // }}}
 
-BCCState *InitState_GL(RE *re) // {{{
-{ return new BCCState_GL(0);
+BCCState_GL::BCCState_GL() // {{{
+{
 } // }}}
-bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, BCCState *given_state) // {{{
-{ BCCState_GL *state = dynamic_cast<BCCState_GL*>(given_state);
+BCCState_GL::~BCCState_GL() // {{{
+{
+} // }}}
+
+bool BCLEQ_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state) // {{{
+{ return false;
+} // }}}
+BCCState *BCUPD_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state) // {{{
+{ return new BCCState();
+} // }}}
+
+bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given_state) // {{{
+{ const BCCState_GL *state = dynamic_cast<const BCCState_GL*>(&given_state);
   if (state==NULL)
     throw (string)"BCLEQ_GL bad state exception";
 
-  for (; state->GetPosition()<lhs.GetLength(); state->SetPosition(state->GetPosition()+1))
-  { unsigned int pos=state->GetPosition();
-    if (pos>=rhs.GetLength())
+  if (state->state<0)
+    return true;
+  if (state->state>0)
+    return false;
+
+  BitCode lhsBits=state->lhsBuffer;
+  lhsBits.Append(lhs);
+  BitCode rhsBits=state->rhsBuffer;
+  rhsBits.Append(rhs);
+  for (int i=0; i<lhsBits.GetLength() && i<rhsBits.GetLength(); ++i)
+  { if (lhsBits.GetBit(i) && !rhsBits.GetBit(i))
       return false;
-    if (lhs.GetBit(pos) && !rhs.GetBit(pos))
-      return false;
-    if (rhs.GetBit(pos) && !lhs.GetBit(pos))
+    if (!lhsBits.GetBit(i) && rhsBits.GetBit(i))
       return true;
   }
-  return true;
+  return !(rhsBits.GetLength()<lhsBits.GetLength());
+} // }}}
+BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given_state) // {{{
+{ const BCCState_GL *state = dynamic_cast<const BCCState_GL*>(&given_state);
+  if (state==NULL)
+    throw (string)"BCUPD_GL bad state exception";
+
+  BCCState_GL *result = new BCCState_GL();
+  result->state=state->state;
+
+  if (state->state<0)
+    return result;
+  if (state->state>0)
+    return result;
+
+  BitCode lhsBits=state->lhsBuffer;
+  lhsBits.Append(lhs);
+  result->lhsBuffer=BitCode(); // clear buffer
+  BitCode rhsBits=state->rhsBuffer;
+  rhsBits.Append(rhs);
+  result->rhsBuffer=BitCode(); // clear buffer
+  for (int i=0; i<lhsBits.GetLength() && i<rhsBits.GetLength(); ++i)
+  { if (lhsBits.GetBit(i) && !rhsBits.GetBit(i))
+    { result->state=1;
+      return result;
+    }
+    if (!lhsBits.GetBit(i) && rhsBits.GetBit(i))
+    { result->state=-1;
+      return result;
+    }
+  }
+  // Set buffers before returning
+  for (int i=rhsBits.GetLength();i<lhsBits.GetLength(); ++i)
+    result->lhsBuffer.PushBit(lhsBits.GetBit(i));
+  for (int i=lhsBits.GetLength();i<rhsBits.GetLength(); ++i)
+    result->rhsBuffer.PushBit(rhsBits.GetBit(i));
+  return result;
 } // }}}
 
-//BCCState *InitState_LL(RE *re) // {{{
-//{ std::vector<BCCCallState_LL> stack;
-//  BCCCallState_LL frame;
-//  frame.myRE=re;
-//  frame.state=0;
-//  return new BCCState_LL(0, stack);
-//} // }}}
 //class PS_RESULT // {{{
 //{ public:
 //    int length;
 //    int pos;
 //    bool cyclic;
 //}; // }}}
-//
 //PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
 //{ const RE_One *re_one = dynamic_cast<const RE_One*>(exp);
 //  const RE_Char *re_char = dynamic_cast<const RE_Char*>(exp);
@@ -284,88 +332,4 @@ bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, BCCState *given_state) // 
 ////    }
 ////  }
 ////} // }}}
-
-/***********************************************
- ** Implementation of BCCState and subclasses **
- ***********************************************/
-BCCState::BCCState() // {{{
-{
-} // }}}
-BCCState::~BCCState() // {{{
-{
-} // }}}
-BCCState *BCCState::Copy() const // {{{
-{
-  return new BCCState();
-} // }}}
-
-BCCState_GL::BCCState_GL(unsigned int pos) // {{{
-: myPosition(pos)
-{
-} // }}}
-BCCState_GL::~BCCState_GL() // {{{
-{
-} // }}}
-unsigned int BCCState_GL::GetPosition() const // {{{
-{
-  return myPosition;
-} // }}}
-void BCCState_GL::SetPosition(unsigned int newPos) // {{{
-{
-  myPosition=newPos;
-} // }}}
-BCCState_GL *BCCState_GL::Copy() const // {{{
-{
-  return new BCCState_GL(GetPosition());
-} // }}}
-
-/** Implementation of memoization state functionality
-  */
-BCCStates::BCCStates(const BCCState &init_state, int nodes) // {{{
-: mySize(nodes)
-{
-  for (int y=0;y<mySize; ++y)
-  for (int x=0;x<y; ++x)
-    myStates[x][y]=init_state.Copy();
-} // }}}
-BCCStates::~BCCStates() // {{{
-{
-  for (map<int,map<int,BCCState*> >::iterator it1=myStates.begin(); it1!=myStates.end(); ++it1)
-    for (map<int,BCCState*>::iterator it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
-      delete it2->second;
-} // }}}
-void BCCStates::SetState(int x, int y, const BCCState &new_state) // {{{
-{
-  if (x==y || x>mySize || y > mySize)
-    throw (string)"BCCStates::SetState error: bad indices";
-
-  if (y<x)
-  { int tmp = x;
-    x=y;
-    y=tmp;
-  }
-  delete myStates[x][y];
-  myStates[x][y]=new_state.Copy();
-} // }}}
-void BCCStates::ShiftState(int source, int dest) // {{{
-{
-  for (int i=0; i<mySize; ++i)
-  {
-    if (i==source || i==dest)
-      continue;
-    SetState(dest,i,*GetState(source,i));
-  }
-} // }}}
-BCCState *BCCStates::GetState(int x, int y) // {{{
-{
-  if (x==y || x>mySize || y > mySize)
-    throw (string)"BCCStates::GetState error: bad indices";
-
-  if (y<x)
-  { int tmp = x;
-    x=y;
-    y=tmp;
-  }
-  return myStates[x][y];
-} // }}}
 

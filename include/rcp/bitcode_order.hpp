@@ -9,78 +9,56 @@ class BCCState // {{{
 { public:
     BCCState();
     virtual ~BCCState();
-    virtual bool LEQ_Answer() const;
   private:
 }; // }}}
 class BCCState_GL : public BCCState // {{{
 { public:
-    BCCState_GL(int state);
+    BCCState_GL();
     virtual ~BCCState_GL();
-
-    bool LEQ_Answer() const;
-
-  private:
     int state; // -1=less, 0=equal, 1=greater
+    BitCode lhsBuffer, rhsBuffer;
 }; // }}}
-class BCCCallState_LL: public BCCState // {{{
-{ public:
-    RE* lhsPos;
-    RE* rhsPos;
-    std::vector<RE*> commonStack;
-    unsigned int lhsPos;
-    unsigned int rhsPos;
-}; // }}}
-//class BCCState_LL : public BCCState_GL // {{{
+//class BCCState_LL: public BCCState_GL // {{{
 //{ public:
-//    BCCState_LL(unsigned int pos, std::vector<BCCCallState_LL>);
-//    virtual ~BCCState_LL();
-//
-//    virtual BCCState_GL *Copy() const;
-//
-//  private:
-//    unsigned int myPosition;
-//    std::vector<BCCCallState_LL> myCallStack;
+//    std::vector<std::pair<RE*,int> > commonStack;
+//    std::vector<std::pair<RE*,int> > lhsStack;
+//    std::vector<std::pair<RE*,int> > rhsStack;
+//    std::vector<int> lhsStartIndex;
+//    std::vector<int> rhsStartIndex;
+//    unsigned int lhsIndex;
+//    unsigned int rhsIndex;
 //}; // }}}
 
-/** BCComparer defines the function type of a resumable comparrison between
+/** BCComparer defines the function type of a resuming comparrison between
   * BitCodes.
-  * Resumable means that when the comparrison is determined the current
-  * comparrison state is returned, that can be used to resume the comparrison
-  * of two bitcodes both having the determined least bitcode as a prefix.
+  * Resuming means that the sub-result of the first part of the comparrison is
+  * given as an argument, and only the (small) delta continuations of the lhs
+  * and rhs have to be applied to the sub result in order to determine the
+  * result of the comparrison.
   * BCLEQ implements the trivial order (always false)
   * BCLEQ_GL implements a greedy leftmost (corresponding to lexicographical) ordering)
   * BCLEQ_LL implements a lonest-leftmost ordering
   */
-typedef BCCState *(*BCCInitState)(RE *re);
-typedef BCCState* (*BCComparer)(const string &lhs_cont, const string &rhs_cont, const BCCState &state);
+typedef bool (*BCComparer)(const BitCode &lhs_cont, const BitCode &rhs_cont, const BCCState &state);
+/** BCUpdater updates the given sub-result with delta continuations for the lhs
+  * and rhs to obtain a new sub-result that can be used as a staring point of a
+  * BCComparer.
+  * BCUPD implements updating for the trivial order (returns copy)
+  * BCUPD_GL implements updating for greedy leftmost ordering
+  * BCUPD_LL implements updating for longest-leftmost ordering
+  */
+typedef BCCState *(*BCUpdater)(const BitCode &lhs_cont, const BitCode &rhs_cont, const BCCState &state);
 
 // Undefined disambiguation
-BCCState *InitState_NN(RE *re);
-bool BCLEQ_NN(const BitCode &lhs, const BitCode &rhs, BCCState *state);
-
+bool BCLEQ_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
+BCCState *BCUPD_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 // Greedy Leftmost disambiguation
-BCCState *InitState_GL(RE *re);
-bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, BCCState *state);
-
+bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
+BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 // Longest Leftmost disambiguation
-//BCCState *InitState_LL(RE *re);
-//bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState *state);
+//bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState &state);
+//BCCState *BCUPD_LL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 
-/** Define the state of comparison memoization with usefull functionality
-  */
-class BCCStates // {{{
-{
-  public:
-    BCCStates(const BCCState &init_state, int nodes);
-    ~BCCStates();
-
-    void SetState(int x, int y, const BCCState &new_state);
-    void ShiftState(int source, int dest);
-    BCCState *GetState(int x, int y);
-
-  private:
-    // A map from nodeid, edge id to the comparrison state
-    std::map<int,std::map<int,BCCState*> > myStates;
-    int mySize;
-}; // }}}
+/** BCCStates holds the commparrison state for each pair of nodes */
+typedef std::map<int,std::map<int,BCCState*> > BCCStates;
 #endif

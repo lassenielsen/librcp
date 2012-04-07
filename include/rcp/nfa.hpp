@@ -54,10 +54,12 @@ class NFANode // {{{
   */
 class NFA // {{{
 { public:
-    // The generalized thompson state holds a bitcode and an integer for each node in the state
-    // The bitcode holds the bits passed since the state of the previous string indes
-    // The integer defines the offset state from the previous string index
+    // The generalized thompson state holds a bitcode and an integer for each node reached at each index
+    // The bitcode holds the bits passed since the state of the previous string index
+    // The integer defines the nfa-node from the previous string index
     typedef std::map<int,std::pair<BitCode, int> > thompson_state;
+    // Map from index, node to bitcode, prev-node, or rather from index to a thompson state
+    typedef std::map<int,thompson_state> thompson_states;
 
     NFA(const RE &exp);
     virtual ~NFA();
@@ -76,7 +78,7 @@ class NFA // {{{
     // Thompson simulation based parsing
     // Not as efficient as DFASIM, but returns the least bitcode for the given ordering.
     // This enables greedy-leftmost and longest-leftmost disambiguations
-    BitCode Thompson(const std::string &s, const BCCState &init_state, const BCComparer leq) const;
+    BitCode Thompson(const std::string &s, BCCState *bcc_init, BCComparer leq, BCUpdater bcc_update) const;
     // Parse returns a RV representing the given string, and
     // throws a string error if the given string is not accepted
     RV *Parse(const std::string &s) const;
