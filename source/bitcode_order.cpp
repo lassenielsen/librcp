@@ -1,5 +1,6 @@
 #include <rcp/bitcode_order.hpp>
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 /***********************************************
@@ -11,12 +12,21 @@ BCCState::BCCState() // {{{
 BCCState::~BCCState() // {{{
 {
 } // }}}
+string BCCState::ToString() const // {{{
+{ return "BCCSTATE";
+} // }}}
 
 BCCState_GL::BCCState_GL() // {{{
+: state(0)
 {
 } // }}}
 BCCState_GL::~BCCState_GL() // {{{
 {
+} // }}}
+string BCCState_GL::ToString() const // {{{
+{ stringstream ss;
+  ss << "BCCSTATE_GL(" << state << "," << lhsBuffer.ToString() << "," << rhsBuffer.ToString() << ")";
+return ss.str();
 } // }}}
 
 bool BCLEQ_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state) // {{{

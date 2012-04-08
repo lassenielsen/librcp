@@ -2,6 +2,8 @@
 #define RCP_BCORDER
 
 #include <vector>
+#include <map>
+#include <string>
 #include <utility>
 #include <rcp/re.hpp>
 
@@ -9,6 +11,7 @@ class BCCState // {{{
 { public:
     BCCState();
     virtual ~BCCState();
+    virtual std::string ToString() const;
   private:
 }; // }}}
 class BCCState_GL : public BCCState // {{{
@@ -17,8 +20,9 @@ class BCCState_GL : public BCCState // {{{
     virtual ~BCCState_GL();
     int state; // -1=less, 0=equal, 1=greater
     BitCode lhsBuffer, rhsBuffer;
+    std::string ToString() const;
 }; // }}}
-//class BCCState_LL: public BCCState_GL // {{{
+//class BCCState_LL: public BCCState // {{{
 //{ public:
 //    std::vector<std::pair<RE*,int> > commonStack;
 //    std::vector<std::pair<RE*,int> > lhsStack;

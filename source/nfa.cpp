@@ -214,6 +214,12 @@ void PrintState(const NFA::thompson_state &state) // {{{
   for (NFA::thompson_state::const_iterator it=state.begin(); it!=state.end(); ++it)
     cout << it->first << " from " << it->second.second << ": " << it->second.first.ToString() << endl;
 } // }}}
+void PrintBCCStates(const BCCStates &states) // {{{
+{ cout << "Comparison States:" << endl;
+  for (BCCStates::const_iterator lhs=states.begin(); lhs!=states.end(); ++lhs)
+  for (map<int,BCCState*>::const_iterator rhs=lhs->second.begin(); rhs!=lhs->second.end(); ++rhs)
+    cout << "(" << lhs->first << "," << rhs->first << "): " << rhs->second->ToString() << endl;
+} // }}}
 void NFA::Closure(thompson_state &state, BCCStates &bccstates, BCComparer leq) const // {{{
 {
   thompson_state tmpNodes=state;
@@ -253,6 +259,7 @@ void NFA::Closure(thompson_state &state, BCCStates &bccstates, BCComparer leq) c
       }
     }
   }
+  //PrintState(state);
   return;
 } // }}}
 void UpdateBCCs(BCCStates &bcc_states, BCUpdater bcc_update, const NFA::thompson_state &deltas) // {{{
@@ -271,6 +278,7 @@ void UpdateBCCs(BCCStates &bcc_states, BCUpdater bcc_update, const NFA::thompson
     bcc_states.erase(bcc_states.begin());
   }
   bcc_states=result;
+  //PrintBCCStates(bcc_states);
 } // }}}
 BitCode NFA::Thompson(const string &s, BCCState *bcc_init, BCComparer leq, BCUpdater bcc_update) const // {{{
 {
@@ -281,11 +289,11 @@ BitCode NFA::Thompson(const string &s, BCCState *bcc_init, BCComparer leq, BCUpd
   bccstates[0][0]=bcc_init;
   // Perform epsilon-closure
   Closure(states[0],bccstates,leq);
-  // Update state
-  UpdateBCCs(bccstates,bcc_update,states[0]);
 
   for (int pos=0; pos<s.size() && !states[pos].empty(); ++pos)
-  { // Find direct edges
+  { // Update comparrison states
+    UpdateBCCs(bccstates,bcc_update,states[pos]);
+    // Find direct edges
     for (thompson_state::const_iterator node=states[pos].begin(); node!=states[pos].end(); ++node)
     { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
       { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 && // ASSUME no multichar edges
@@ -307,8 +315,6 @@ BitCode NFA::Thompson(const string &s, BCCState *bcc_init, BCComparer leq, BCUpd
     }
     // Perform epsilon-closure
     Closure(states[pos+1],bccstates,leq);
-    // Update state
-    UpdateBCCs(bccstates,bcc_update,states[0]);
   }
 
   // Search for accepting state in end state

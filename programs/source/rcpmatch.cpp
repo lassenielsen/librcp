@@ -492,6 +492,45 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
+  else if (re_method=="nfa_thompson_gl_reduce") // {{{
+  { double c_1=gettime();
+    NFA nfa(*re);
+    nfa.RemoveDeadStates();
+    nfa.MakeCompact();
+    nfa.RemoveUnreachableStates();
+    nfa.Reduce();
+    nfa.Explode();
+    double c_2=gettime();
+    if (re_cmd=="print")
+    { cout << nfa.ToString() << endl;
+      return 0;
+    }
+    else if (re_cmd=="compress")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
+    else if (re_cmd=="time")
+    { double t_1=gettime();
+      nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+      double t_2=gettime();
+      if (n>=0)
+        cout << n << " ";
+      cout.precision(10);
+      cout << c_2-c_1+t_2-t_1 << endl;
+      return 0;
+    }
+    else
+    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
+      return 0;
+    }
+  } // }}}
 //  else if (re_method=="nfa_thompson_ll") // {{{
 //  { double c_1=gettime();
 //    NFA nfa(*re);
