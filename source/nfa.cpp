@@ -222,42 +222,37 @@ void PrintBCCStates(const BCCStates &states) // {{{
 } // }}}
 void NFA::Closure(thompson_state &state, BCCStates &bccstates, BCComparer leq) const // {{{
 {
-  thompson_state tmpNodes=state;
-  vector<int> trace; // Used to avoid epsilon-loops
-  vector<int> stack; // Used to keep track of the position at each step in the trace (associated bitcode and source node is in state)
-  // Continue while new nodes are found
-  while (tmpNodes.size()>0 || trace.size()>0)
-  { if (trace.size()==0)
-    { trace.push_back(tmpNodes.begin()->first);
-      stack.push_back(0);
-      // node already in state
-      tmpNodes.erase(tmpNodes.begin());
-    }
-    else
-    { int edge = stack.back();
-      stack.back()=edge+1;
-      int node = trace.back();
-      if (edge>=myNodes[node].CountTransitions()) // pop stack
-      { trace.pop_back();
-        stack.pop_back();
-      }
-      else if (myNodes[node].GetTransition(edge).GetInput()=="" &&
-               !vector_member(trace,myNodes[node].GetTransition(edge).GetDest()) // No cycles!
-              ) // Try edge
-      { int dest_node=myNodes[node].GetTransition(edge).GetDest();
-        thompson_state::const_iterator dest = state.find(dest_node);
-        BitCode code=state[node].first;
-        code.Append(GetNode(node).GetTransition(edge).GetOutput()); // Add bit to bitcode
-        // FIXME: null pointer exception here for BCLEQ_GL, re: aa+aaa str: aaaaa. WHY?
-        if (dest==state.end() ||
-            leq(code,dest->second.first,*bccstates[state[node].second][dest->second.second]))
-        { trace.push_back(dest_node);
-          stack.push_back(0);
-          // Update state with new source node and bitcode
-          state[dest_node]=pair<BitCode,int>(code,state[node].second);
+  set<int> worklist;
+  map<int, vector<int> > traces; // Used to avoid epsilon-loops
+  for (thompson_state::const_iterator node=state.begin(); node!=state.end(); ++node)
+  { worklist.insert(node->first);
+    traces[node->first].push_back(node->first);
+  }
+  // Continue while there are nodes in the worklist
+  while (worklist.size()>0)
+  { set<int> newWorklist;
+    // Do a breath-first search, to avoid exponential blow up
+    for (set<int>::const_iterator node=worklist.begin(); node!=worklist.end(); ++node)
+    { for (int edge=0; edge<myNodes[*node].CountTransitions(); ++edge)
+      { if (myNodes[*node].GetTransition(edge).GetInput()=="" &&
+            !vector_member(traces[*node],myNodes[*node].GetTransition(edge).GetDest()) // No cycles!
+           ) // Try edge
+        { int dest_node=myNodes[*node].GetTransition(edge).GetDest();
+          thompson_state::const_iterator dest = state.find(dest_node);
+          BitCode code=state[*node].first;
+          code.Append(GetNode(*node).GetTransition(edge).GetOutput()); // Add bit to bitcode
+          if (dest==state.end() ||
+              leq(code,dest->second.first,*bccstates[state[*node].second][dest->second.second]))
+          { // Update state with new source node and bitcode
+            newWorklist.insert(dest_node);
+            state[dest_node]=pair<BitCode,int>(code,state[*node].second);
+            traces[dest_node]=traces[*node];
+            traces[dest_node].push_back(dest_node);
+          }
         }
       }
     }
+    worklist=newWorklist;
   }
   //PrintState(state);
   return;
