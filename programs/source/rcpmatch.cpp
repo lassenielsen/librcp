@@ -308,11 +308,7 @@ int main(int argc, char **argv)
   else if (re_method=="nfa_minimize") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.MakePrefix();
-    nfa.Reduce();
+    nfa.Minimize(true,false);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
@@ -348,11 +344,7 @@ int main(int argc, char **argv)
   else if (re_method=="nfa_reduce") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(false,false);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
@@ -404,6 +396,17 @@ int main(int argc, char **argv)
       }
       return 0;
     }
+    else if (re_cmd=="compress_gl")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
     else if (re_cmd=="time")
     { double t_1=gettime();
       nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
@@ -422,11 +425,7 @@ int main(int argc, char **argv)
   else if (re_method=="nfa_thompson_reduce") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(false,true);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
@@ -443,6 +442,17 @@ int main(int argc, char **argv)
       }
       return 0;
     }
+    else if (re_cmd=="compress_gl")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
     else if (re_cmd=="time")
     { double t_1=gettime();
       nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
@@ -458,15 +468,27 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-  else if (re_method=="nfa_thompson_gl") // {{{
+  else if (re_method=="nfa_thompson_minimize") // {{{
   { double c_1=gettime();
     NFA nfa(*re);
+    nfa.Minimize(true,true);
     double c_2=gettime();
     if (re_cmd=="print")
     { cout << nfa.ToString() << endl;
       return 0;
     }
     else if (re_cmd=="compress")
+    { try
+      { BitCode result=nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
+        cout << result.ToString() << endl;
+      }
+      catch (string s)
+      {
+        cout << "Error: " << s << endl;
+      }
+      return 0;
+    }
+    else if (re_cmd=="compress_gl")
     { try
       { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
         cout << result.ToString() << endl;
@@ -479,7 +501,7 @@ int main(int argc, char **argv)
     }
     else if (re_cmd=="time")
     { double t_1=gettime();
-      nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
+      nfa.Thompson(re_str,new BCCState(),BCLEQ_NN,BCUPD_NN);
       double t_2=gettime();
       if (n>=0)
         cout << n << " ";
@@ -492,80 +514,6 @@ int main(int argc, char **argv)
       return 0;
     }
   } // }}}
-  else if (re_method=="nfa_thompson_gl_reduce") // {{{
-  { double c_1=gettime();
-    NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.Reduce();
-    nfa.Explode();
-    double c_2=gettime();
-    if (re_cmd=="print")
-    { cout << nfa.ToString() << endl;
-      return 0;
-    }
-    else if (re_cmd=="compress")
-    { try
-      { BitCode result=nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
-        cout << result.ToString() << endl;
-      }
-      catch (string s)
-      {
-        cout << "Error: " << s << endl;
-      }
-      return 0;
-    }
-    else if (re_cmd=="time")
-    { double t_1=gettime();
-      nfa.Thompson(re_str,new BCCState_GL(),BCLEQ_GL,BCUPD_GL);
-      double t_2=gettime();
-      if (n>=0)
-        cout << n << " ";
-      cout.precision(10);
-      cout << c_2-c_1+t_2-t_1 << endl;
-      return 0;
-    }
-    else
-    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
-      return 0;
-    }
-  } // }}}
-//  else if (re_method=="nfa_thompson_ll") // {{{
-//  { double c_1=gettime();
-//    NFA nfa(*re);
-//    BCOrder_LL order(*re);
-//    double c_2=gettime();
-//    if (re_cmd=="print")
-//    { cout << nfa.ToString() << endl;
-//      return 0;
-//    }
-//    else if (re_cmd=="compress")
-//    { try
-//      { BitCode result=nfa.Thompson(re_str,order);
-//        cout << result.ToString() << endl;
-//      }
-//      catch (string s)
-//      {
-//        cout << "Error: " << s << endl;
-//      }
-//      return 0;
-//    }
-//    else if (re_cmd=="time")
-//    { double t_1=gettime();
-//      nfa.Thompson(re_str,order);
-//      double t_2=gettime();
-//      if (n>=0)
-//        cout << n << " ";
-//      cout.precision(10);
-//      cout << c_2-c_1+t_2-t_1 << endl;
-//      return 0;
-//    }
-//    else
-//    { cout << "Unknown NFA_THOMPSON command: " << re_cmd << endl;
-//      return 0;
-//    }
-//  } // }}}
   else if (re_method=="dfa") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
@@ -619,11 +567,7 @@ int main(int argc, char **argv)
   else if (re_method=="dfa_reduce") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(false,true);
     DFA dfa(nfa);
     double c_2 = gettime();
     if (re_cmd=="print")
@@ -674,12 +618,7 @@ int main(int argc, char **argv)
   else if (re_method=="dfa_minimize") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.MakePrefix();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(true,true);
     DFA dfa(nfa);
     double c_2 = gettime();
     if (re_cmd=="print")
@@ -762,11 +701,7 @@ int main(int argc, char **argv)
   else if (re_method=="dfasim_reduce") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(false,true);
     DFA dfa(nfa,false); // Create DFA structure, without precomputing DFA states
     double c_2 = gettime();
     if (re_cmd=="print")
@@ -799,12 +734,7 @@ int main(int argc, char **argv)
   else if (re_method=="dfasim_minimize") // {{{
   { double c_1 = gettime();
     NFA nfa(*re);
-    nfa.RemoveDeadStates();
-    nfa.MakeCompact();
-    nfa.RemoveUnreachableStates();
-    nfa.MakePrefix();
-    nfa.Reduce();
-    nfa.Explode();
+    nfa.Minimize(true,true);
     DFA dfa(nfa,false); // Create DFA structure, without precomputing DFA states
     double c_2 = gettime();
     if (re_cmd=="print")

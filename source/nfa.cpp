@@ -733,3 +733,13 @@ void NFA::MakePrefix() // {{{
   // Use result
   myNodes=newNodes;
 } // }}}
+void NFA::Minimize(bool allow_reorder, bool explode) // {{{
+{ RemoveDeadStates();
+  MakeCompact();
+  RemoveUnreachableStates();
+  if (allow_reorder)
+    MakePrefix();
+  Reduce();
+  if (explode)
+    Explode();
+} // }}}
