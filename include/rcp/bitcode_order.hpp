@@ -22,16 +22,36 @@ class BCCState_GL : public BCCState // {{{
     BitCode lhsBuffer, rhsBuffer;
     std::string ToString() const;
 }; // }}}
-//class BCCState_LL: public BCCState // {{{
-//{ public:
-//    std::vector<std::pair<RE*,int> > commonStack;
-//    std::vector<std::pair<RE*,int> > lhsStack;
-//    std::vector<std::pair<RE*,int> > rhsStack;
-//    std::vector<int> lhsStartIndex;
-//    std::vector<int> rhsStartIndex;
-//    unsigned int lhsIndex;
-//    unsigned int rhsIndex;
-//}; // }}}
+class LL_Trace // {{{
+{ public:
+    LL_Trace();
+    virtual ~LL_Trace();
+    virtual std::string ToString();
+
+  private:
+    LL_Trace *myTrace;
+}; // }}}
+class LL_Trace_Step : public LL_Trace // {{{
+{ public:
+  private:
+    std::string myStep;
+    LL_Trace *myTail;
+}
+    std::vector<std::pair<RE*,int> > commonStack;
+    std::vector<std::pair<RE*,int> > lhsStack;
+    std::vector<std::pair<RE*,int> > rhsStack;
+    std::vector<int> lhsStartIndex;
+    std::vector<int> rhsStartIndex;
+    unsigned int lhsIndex;
+    unsigned int rhsIndex;
+}; // }}}
+class BCCState_LL : public BCCState // {{{
+{ public:
+    BCCState_GL();
+    virtual ~BCCState_GL();
+    LL_Trace *trace;
+    std::string ToString() const;
+}; // }}}
 
 /** BCComparer defines the function type of a resuming comparrison between
   * BitCodes.
