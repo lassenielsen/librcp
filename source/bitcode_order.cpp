@@ -95,6 +95,41 @@ BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given
   return result;
 } // }}}
 
+LL_Trace::LL_Trace(unsigned int index, const RE* exp) // {{{
+: myStatus(0),
+  myExp(exp),
+  myIndex(index),
+  myEntryIndex(index),
+  myCompleted(false)
+{
+} // }}}
+LL_Trace::~LL_Trace() // {{{
+{
+} // }}}
+bool LL_Trace::LEQ() const // {{{
+{ return myStatus<=0;
+} // }}}
+string LL_Trace::ToString() const // {{{
+{ stringstream ss;
+  ss << "(" << myEntryIndex << "," << myIndex << ")";
+  return ss.str();
+} // }}}
+LL_Trace_Sub::LL_Trace_Sub(unsigned int index, const RE* exp) // {{{
+: LL_Trace(index,exp)
+{
+} // }}}
+LL_Trace_Sub::~LL_Trace_Sub() // {{{
+{ delete mySub;
+} // }}}
+bool LL_Trace_Sub::LEQ() const // {{{
+{ if (myStatus!=0)
+    return myStatus<=0;
+  return mySub->LEQ();
+} // }}}
+string LL_Trace_Sub::ToString() const // {{{
+{ return myStep + LL_Trace::ToString() + "->" + mySub->ToString();
+} // }}}
+
 //class PS_RESULT // {{{
 //{ public:
 //    int length;

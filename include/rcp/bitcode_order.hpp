@@ -2,6 +2,7 @@
 #define RCP_BCORDER
 
 #include <vector>
+#include <list>
 #include <map>
 #include <string>
 #include <utility>
@@ -12,7 +13,6 @@ class BCCState // {{{
     BCCState();
     virtual ~BCCState();
     virtual std::string ToString() const;
-  private:
 }; // }}}
 class BCCState_GL : public BCCState // {{{
 { public:
@@ -22,28 +22,40 @@ class BCCState_GL : public BCCState // {{{
     BitCode lhsBuffer, rhsBuffer;
     std::string ToString() const;
 }; // }}}
-class LL_Trace // {{{
+class LL_Trace // Represents an (un)completed stub {{{
 { public:
-    LL_Trace();
+    LL_Trace(unsigned int index, const RE* exp);
     virtual ~LL_Trace();
-    virtual std::string ToString();
+    virtual bool LEQ() const;
+    virtual std::string ToString() const;
+
+    unsigned int myEntryIndex;
+    unsigned int myIndex;
+    int myStatus; //-1=less, 0=equal, 1=greater
+    const RE *myExp;
+    bool myCompleted;
+}; // }}}
+class LL_Trace_Sub : public LL_Trace // Represents traces with (first level) similar subtraces {{{
+{ public:
+    LL_Trace_Sub();
+    virtual ~LL_Trace_Sub();
+    bool LEQ() const;
+    std::string ToString() const;
 
   private:
-    LL_Trace *myTrace;
+    std::string myStep; // left, right, first, snd, cons
+    LL_Trace *mySub;
 }; // }}}
-class LL_Trace_Step : public LL_Trace // {{{
+class LL_Trace_Split : public LL_Trace // Respresents traces with dissimilar subtraces {{{
 { public:
-  private:
-    std::string myStep;
+    LL_Trace_Split();
+    virtual ~LL_Trace_Split();
+    bool LEQ() const;
+    std::string ToString() const;
+
     LL_Trace *myTail;
-}
-    std::vector<std::pair<RE*,int> > commonStack;
-    std::vector<std::pair<RE*,int> > lhsStack;
-    std::vector<std::pair<RE*,int> > rhsStack;
-    std::vector<int> lhsStartIndex;
-    std::vector<int> rhsStartIndex;
-    unsigned int lhsIndex;
-    unsigned int rhsIndex;
+    LL_Trace *myLeft;
+    LL_Trace *myRight;
 }; // }}}
 class BCCState_LL : public BCCState // {{{
 { public:
