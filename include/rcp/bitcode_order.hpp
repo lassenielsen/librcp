@@ -22,10 +22,10 @@ class BCCState_GL : public BCCState // {{{
     BitCode lhsBuffer, rhsBuffer;
     std::string ToString() const;
 }; // }}}
-class LL_Trace // Represents an (un)completed stub {{{
+class LL_Stack // Represents an (un)completed stub {{{
 { public:
-    LL_Trace(unsigned int index, const RE* exp);
-    virtual ~LL_Trace();
+    LL_Stack(unsigned int index, const RE* exp);
+    virtual ~LL_Stack();
     virtual bool LEQ() const;
     virtual std::string ToString() const;
 
@@ -35,33 +35,31 @@ class LL_Trace // Represents an (un)completed stub {{{
     const RE *myExp;
     bool myCompleted;
 }; // }}}
-class LL_Trace_Sub : public LL_Trace // Represents traces with (first level) similar subtraces {{{
+class LL_Stack_Sub : public LL_Stack // Represents traces with (first level) similar subtraces {{{
 { public:
-    LL_Trace_Sub();
-    virtual ~LL_Trace_Sub();
+    LL_Stack_Sub(unsigned int index, const RE* exp);
+    virtual ~LL_Stack_Sub();
     bool LEQ() const;
     std::string ToString() const;
 
-  private:
     std::string myStep; // left, right, first, snd, cons
-    LL_Trace *mySub;
+    LL_Stack *mySub;
 }; // }}}
-class LL_Trace_Split : public LL_Trace // Respresents traces with dissimilar subtraces {{{
+class LL_Stack_Split : public LL_Stack // Respresents traces with dissimilar subtraces {{{
 { public:
-    LL_Trace_Split();
-    virtual ~LL_Trace_Split();
+    LL_Stack_Split(unsigned int index, const RE* exp);
+    virtual ~LL_Stack_Split();
     bool LEQ() const;
     std::string ToString() const;
 
-    LL_Trace *myTail;
-    LL_Trace *myLeft;
-    LL_Trace *myRight;
+    LL_Stack *myLeft;
+    LL_Stack *myRight;
 }; // }}}
 class BCCState_LL : public BCCState // {{{
 { public:
-    BCCState_GL();
-    virtual ~BCCState_GL();
-    LL_Trace *trace;
+    BCCState_LL();
+    virtual ~BCCState_LL();
+    LL_Stack *myTrace;
     std::string ToString() const;
 }; // }}}
 

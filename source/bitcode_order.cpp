@@ -95,7 +95,7 @@ BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given
   return result;
 } // }}}
 
-LL_Trace::LL_Trace(unsigned int index, const RE* exp) // {{{
+LL_Stack::LL_Stack(unsigned int index, const RE* exp) // {{{
 : myStatus(0),
   myExp(exp),
   myIndex(index),
@@ -103,31 +103,88 @@ LL_Trace::LL_Trace(unsigned int index, const RE* exp) // {{{
   myCompleted(false)
 {
 } // }}}
-LL_Trace::~LL_Trace() // {{{
+LL_Stack::~LL_Stack() // {{{
 {
 } // }}}
-bool LL_Trace::LEQ() const // {{{
+bool LL_Stack::LEQ() const // {{{
 { return myStatus<=0;
 } // }}}
-string LL_Trace::ToString() const // {{{
+string LL_Stack::ToString() const // {{{
 { stringstream ss;
   ss << "(" << myEntryIndex << "," << myIndex << ")";
   return ss.str();
 } // }}}
-LL_Trace_Sub::LL_Trace_Sub(unsigned int index, const RE* exp) // {{{
-: LL_Trace(index,exp)
+LL_Stack_Sub::LL_Stack_Sub(unsigned int index, const RE* exp) // {{{
+: LL_Stack(index,exp),
+  mySub(NULL)
 {
 } // }}}
-LL_Trace_Sub::~LL_Trace_Sub() // {{{
-{ delete mySub;
+LL_Stack_Sub::~LL_Stack_Sub() // {{{
+{ if (mySub!=NULL)
+    delete mySub;
 } // }}}
-bool LL_Trace_Sub::LEQ() const // {{{
+bool LL_Stack_Sub::LEQ() const // {{{
 { if (myStatus!=0)
     return myStatus<=0;
   return mySub->LEQ();
 } // }}}
-string LL_Trace_Sub::ToString() const // {{{
-{ return myStep + LL_Trace::ToString() + "->" + mySub->ToString();
+string LL_Stack_Sub::ToString() const // {{{
+{ return myStep + LL_Stack::ToString() + "->" + mySub->ToString();
+} // }}}
+LL_Stack_Split::LL_Stack_Split(unsigned int index, const RE* exp) // {{{
+: LL_Stack(index,exp),
+  myLeft(NULL),
+  myRight(NULL)
+{
+} // }}}
+LL_Stack_Split::~LL_Stack_Split() // {{{
+{ if (myLeft!=NULL)
+    delete myLeft;
+  if (myRight!=NULL)
+    delete myRight;
+} // }}}
+bool LL_Stack_Split::LEQ() const // {{{
+{ if (myStatus!=0)
+    return myStatus<=0;
+  const RE_Seq *exp_seq = dynamic_cast<const RE_Seq*>(myExp);
+  const RE_Sum *exp_sum = dynamic_cast<const RE_Sum*>(myExp);
+  const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
+  if (exp_seq!=NULL) // sequence
+  { if () // left=second, right=first
+    { if () // right->Index > left->EntryIndex
+        return false;
+      else
+        return myRight->LEQ();
+    }
+    else // left=first and right=second
+    { if () // left->Index > right->EntryIndex
+        return true;
+      else
+        return myLeft->LEQ();
+    }
+  }
+  else if (exp_sum!=NULL) // alternation
+  { if () // left=inr, right=inl
+      return false;
+    else // left=inl, right=inr
+      return true;
+  }
+  else if (exp_star!=NULL) // repetition
+  { if () // both are cons! left->EntryIndex > right->EntryIndex
+    { if () // left->Index > left->EntryIndex
+        return false;
+      else
+        return myRight->LEQ();
+    }
+    else // right->EntryIndex > left.EntryIndex
+    { if () // right->Index > right-> EntryIndex
+        return true;
+      else
+        return myLeft->LEQ();
+    }
+  }
+  else // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
+    return true;
 } // }}}
 
 //class PS_RESULT // {{{
