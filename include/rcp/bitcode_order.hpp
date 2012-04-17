@@ -42,7 +42,7 @@ class LL_Stack_Sub : public LL_Stack // Represents traces with (first level) sim
     bool LEQ() const;
     std::string ToString() const;
 
-    std::string myStep; // left, right, first, snd, cons
+    std::string myStep; // inl, inr, fst, rgt, cons
     LL_Stack *mySub;
 }; // }}}
 class LL_Stack_Split : public LL_Stack // Respresents traces with dissimilar subtraces {{{

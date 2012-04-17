@@ -149,9 +149,11 @@ bool LL_Stack_Split::LEQ() const // {{{
   const RE_Seq *exp_seq = dynamic_cast<const RE_Seq*>(myExp);
   const RE_Sum *exp_sum = dynamic_cast<const RE_Sum*>(myExp);
   const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
+  const LL_Stack_Sub *leftSub = dynamic_cast<const LL_Stack_Sub*>(myLeft);
+  const LL_Stack_Sub *rightSub = dynamic_cast<const LL_Stack_Sub*>(myRight);
   if (exp_seq!=NULL) // sequence
-  { if () // left=second, right=first
-    { if () // right->Index > left->EntryIndex
+  { if (leftSub->myStep=="snd" && rightSub->myStep=="fst") // left=second, right=first
+    { if (leftSub->myIndex>leftSub->myEntryIndex) // left->Index > left->EntryIndex
         return false;
       else
         return myRight->LEQ();
@@ -168,6 +170,8 @@ bool LL_Stack_Split::LEQ() const // {{{
       return false;
     else // left=inl, right=inr
       return true;
+    else // one trace is empty
+      return true;
   }
   else if (exp_star!=NULL) // repetition
   { if () // both are cons! left->EntryIndex > right->EntryIndex
@@ -182,9 +186,11 @@ bool LL_Stack_Split::LEQ() const // {{{
       else
         return myLeft->LEQ();
     }
+    else // one trace is empty
+      return true;
   }
-  else // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
-    return true;
+  // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
+  return true;
 } // }}}
 
 //class PS_RESULT // {{{
