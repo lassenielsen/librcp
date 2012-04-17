@@ -151,6 +151,8 @@ bool LL_Stack_Split::LEQ() const // {{{
   const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
   const LL_Stack_Sub *leftSub = dynamic_cast<const LL_Stack_Sub*>(myLeft);
   const LL_Stack_Sub *rightSub = dynamic_cast<const LL_Stack_Sub*>(myRight);
+  if (leftSub==NULL || rightSub==NULL)
+    return true;
   if (exp_seq!=NULL) // sequence
   { if (leftSub->myStep=="snd" && rightSub->myStep=="fst") // left=second, right=first
     { if (leftSub->myIndex>leftSub->myEntryIndex) // left->Index > left->EntryIndex
@@ -158,36 +160,32 @@ bool LL_Stack_Split::LEQ() const // {{{
       else
         return myRight->LEQ();
     }
-    else // left=first and right=second
-    { if () // left->Index > right->EntryIndex
+    else if (leftSub->myStep=="fst" && rightSub->myStep=="snd") // left=first and right=second
+    { if (rightSub->myIndex > rightSub->myEntryIndex) // right->Index > right->EntryIndex
         return true;
-      else
+      else 
         return myLeft->LEQ();
     }
   }
   else if (exp_sum!=NULL) // alternation
-  { if () // left=inr, right=inl
+  { if (leftSub->myStep=="inr" && rightSub->myStep=="inl") // left=inr, right=inl
       return false;
     else // left=inl, right=inr
       return true;
-    else // one trace is empty
-      return true;
   }
   else if (exp_star!=NULL) // repetition
-  { if () // both are cons! left->EntryIndex > right->EntryIndex
-    { if () // left->Index > left->EntryIndex
+  { if (leftSub->myEntryIndex > rightSub->myEntryIndex) // both are cons! left->EntryIndex > right->EntryIndex
+    { if (leftSub->myIndex > leftSub->myEntryIndex) // left->Index > left->EntryIndex
         return false;
       else
         return myRight->LEQ();
     }
-    else // right->EntryIndex > left.EntryIndex
-    { if () // right->Index > right-> EntryIndex
+    else if (rightSub->myEntryIndex > leftSub->myEntryIndex) // right->EntryIndex > lef->.EntryIndex
+    { if (rightSub->myIndex > rightSub->myEntryIndex) // right->Index > right-> EntryIndex
         return true;
       else
         return myLeft->LEQ();
     }
-    else // one trace is empty
-      return true;
   }
   // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
   return true;
