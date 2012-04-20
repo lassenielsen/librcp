@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <rcp/re.hpp>
+#include <rcp/bitcode.hpp>
 
 class BCCState // {{{
 { public:
@@ -27,6 +28,7 @@ class LL_Stack // Represents an (un)completed stub {{{
     LL_Stack(unsigned int index, const RE* exp);
     virtual ~LL_Stack();
     virtual bool LEQ() const;
+    virtual LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     virtual std::string ToString() const;
 
     unsigned int myEntryIndex;
@@ -40,9 +42,10 @@ class LL_Stack_Sub : public LL_Stack // Represents traces with (first level) sim
     LL_Stack_Sub(unsigned int index, const RE* exp);
     virtual ~LL_Stack_Sub();
     bool LEQ() const;
+    LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     std::string ToString() const;
 
-    std::string myStep; // inl, inr, fst, rgt, cons
+    std::string myStep; // inl, inr, fst, snd, cons
     LL_Stack *mySub;
 }; // }}}
 class LL_Stack_Split : public LL_Stack // Respresents traces with dissimilar subtraces {{{
@@ -50,6 +53,7 @@ class LL_Stack_Split : public LL_Stack // Respresents traces with dissimilar sub
     LL_Stack_Split(unsigned int index, const RE* exp);
     virtual ~LL_Stack_Split();
     bool LEQ() const;
+    LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     std::string ToString() const;
 
     LL_Stack *myLeft;

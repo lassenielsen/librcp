@@ -109,6 +109,52 @@ LL_Stack::~LL_Stack() // {{{
 bool LL_Stack::LEQ() const // {{{
 { return myStatus<=0;
 } // }}}
+LL_Stack *LL_Stack::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lhsPos, unsigned int &rhsPos, unsigned int &index) const // {{{
+{ 
+  const RE_One *exp_one = dynamic_cast<const RE_One*>(myExp);
+  const RE_Char *exp_chr = dynamic_cast<const RE_Char*>(myExp);
+  const RE_Seq *exp_seq = dynamic_cast<const RE_Seq*>(myExp);
+  const RE_Sum *exp_sum = dynamic_cast<const RE_Sum*>(myExp);
+  const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
+  if (exp_one!=NULL)
+    return NULL;
+  else if (exp_chr!=NULL)
+  { ++index;
+    return NULL;
+  }
+  else if (re_seq!=NULL) // {{{
+  { LL_Stack *tmpStack = new LL_Stack(index,&re_seq->GetFront());
+    int startIndex=index;
+    LL_Stack *frontStack=tmpStack->Upd(lhs,rhs,lhsPos,rhsPos,index);
+    delete tmpStack;
+    if (frontStack!=NULL)
+    { LL_Stack *result=new LL_Stack_Sub(startIndex,myExp);
+      result->mySub=frontStack;
+      result->myStep="fst";
+      return result;
+    }
+    else
+    { tmpStack=new LL_Stack(index,&re_seq->GetBack());
+      LL_Stack *backStack=tmpStack->Upd(lhs,rhs,lhspos,rhspos,index);
+      delete tmpStack;
+      if (backStack!=NULL)
+      { LL_Stack *result=new LL_Stack_Sub(startIndex,myExp);
+        result->mySub=backStack;
+        result->myStep="snd";
+        return result;
+      }
+      else return NULL;
+    }
+  } // }}}
+  else if (re_sum!=NULL)
+  { if (lhs.GetBit(lhsPos) == rhs.GetBit(lhsPos))
+    { LL_Trace *subTrace=NULL;
+      if (lhs.GetBit(lhsPos))
+      { 
+    }
+  }
+LL_Stack r1=re_seq->GetFront
+} // }}}
 string LL_Stack::ToString() const // {{{
 { stringstream ss;
   ss << "(" << myEntryIndex << "," << myIndex << ")";
@@ -189,6 +235,9 @@ bool LL_Stack_Split::LEQ() const // {{{
   }
   // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
   return true;
+} // }}}
+string LL_Stack_Split::ToString() const // {{{
+{ return (string)"Split:\n  LHS: " + myLeft->ToString() + "\n  RHS: " + myRight->ToString();
 } // }}}
 
 //class PS_RESULT // {{{
