@@ -23,12 +23,12 @@ class BCCState_GL : public BCCState // {{{
     BitCode lhsBuffer, rhsBuffer;
     std::string ToString() const;
 }; // }}}
-class LL_Stack // Represents an (un)completed stub {{{
+class BCCState_LLStack : public BCCState // Represents an (un)completed stub {{{
 { public:
-    LL_Stack(unsigned int index, const RE* exp);
-    virtual ~LL_Stack();
+    BCCState_LLStack(unsigned int index, const RE* exp);
+    virtual ~BCCState_LLStack();
     virtual bool LEQ() const;
-    virtual LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
+    virtual BCCState_LLStack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     virtual std::string ToString() const;
 
     unsigned int myEntryIndex;
@@ -37,34 +37,27 @@ class LL_Stack // Represents an (un)completed stub {{{
     const RE *myExp;
     bool myCompleted;
 }; // }}}
-class LL_Stack_Sub : public LL_Stack // Represents traces with (first level) similar subtraces {{{
+class BCCState_LLStack_Sub : public BCCState_LLStack // Represents traces with (first level) similar subtraces {{{
 { public:
-    LL_Stack_Sub(unsigned int index, const RE* exp);
-    virtual ~LL_Stack_Sub();
+    BCCState_LLStack_Sub(unsigned int index, const RE* exp);
+    virtual ~BCCState_LLStack_Sub();
     bool LEQ() const;
-    LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
+    BCCState_LLStack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     std::string ToString() const;
 
     std::string myStep; // inl, inr, fst, snd, cons
-    LL_Stack *mySub;
+    BCCState_LLStack *mySub;
 }; // }}}
-class LL_Stack_Split : public LL_Stack // Respresents traces with dissimilar subtraces {{{
+class BCCState_LLStack_Split : public BCCState_LLStack // Respresents traces with dissimilar subtraces {{{
 { public:
-    LL_Stack_Split(unsigned int index, const RE* exp);
-    virtual ~LL_Stack_Split();
+    BCCState_LLStack_Split(unsigned int index, const RE* exp);
+    virtual ~BCCState_LLStack_Split();
     bool LEQ() const;
-    LL_Stack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
+    BCCState_LLStack *UPD(const BitCode &lhs, const BitCode &rhs, unsigned int lhsPos, unsigned int rhsPos, unsigned int index) const;
     std::string ToString() const;
 
-    LL_Stack *myLeft;
-    LL_Stack *myRight;
-}; // }}}
-class BCCState_LL : public BCCState // {{{
-{ public:
-    BCCState_LL();
-    virtual ~BCCState_LL();
-    LL_Stack *myTrace;
-    std::string ToString() const;
+    BCCState_LLStack *myLeft;
+    BCCState_LLStack *myRight;
 }; // }}}
 
 /** BCComparer defines the function type of a resuming comparrison between
@@ -94,7 +87,7 @@ BCCState *BCUPD_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state
 bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 // Longest Leftmost disambiguation
-//bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState &state);
+bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState &state);
 //BCCState *BCUPD_LL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 
 /** BCCStates holds the commparrison state for each pair of nodes */

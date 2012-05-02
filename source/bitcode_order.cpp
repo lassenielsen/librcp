@@ -95,7 +95,7 @@ BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given
   return result;
 } // }}}
 
-LL_Stack::LL_Stack(unsigned int index, const RE* exp) // {{{
+BCCState_LLStack::BCCState_LLStack(unsigned int index, const RE* exp) // {{{
 : myStatus(0),
   myExp(exp),
   myIndex(index),
@@ -103,13 +103,13 @@ LL_Stack::LL_Stack(unsigned int index, const RE* exp) // {{{
   myCompleted(false)
 {
 } // }}}
-LL_Stack::~LL_Stack() // {{{
+BCCState_LLStack::~BCCState_LLStack() // {{{
 {
 } // }}}
-bool LL_Stack::LEQ() const // {{{
+bool BCCState_LLStack::LEQ() const // {{{
 { return myStatus<=0;
 } // }}}
-LL_Stack *LL_Stack::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lhsPos, unsigned int &rhsPos, unsigned int &index) const // {{{
+BCCState_LLStack *BCCState_LLStack::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lhsPos, unsigned int &rhsPos, unsigned int &index) const // {{{
 { 
   const RE_One *exp_one = dynamic_cast<const RE_One*>(myExp);
   const RE_Char *exp_chr = dynamic_cast<const RE_Char*>(myExp);
@@ -123,22 +123,22 @@ LL_Stack *LL_Stack::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lh
     return NULL;
   }
   else if (re_seq!=NULL) // {{{
-  { LL_Stack *tmpStack = new LL_Stack(index,&re_seq->GetFront());
+  { BCCState_LLStack *tmpStack = new BCCState_LLStack(index,&re_seq->GetFront());
     int startIndex=index;
-    LL_Stack *frontStack=tmpStack->Upd(lhs,rhs,lhsPos,rhsPos,index);
+    BCCState_LLStack *frontStack=tmpStack->Upd(lhs,rhs,lhsPos,rhsPos,index);
     delete tmpStack;
     if (frontStack!=NULL)
-    { LL_Stack *result=new LL_Stack_Sub(startIndex,myExp);
+    { BCCState_LLStack *result=new BCCState_LLStack_Sub(startIndex,myExp);
       result->mySub=frontStack;
       result->myStep="fst";
       return result;
     }
     else
-    { tmpStack=new LL_Stack(index,&re_seq->GetBack());
-      LL_Stack *backStack=tmpStack->Upd(lhs,rhs,lhspos,rhspos,index);
+    { tmpStack=new BCCState_LLStack(index,&re_seq->GetBack());
+      BCCState_LLStack *backStack=tmpStack->Upd(lhs,rhs,lhspos,rhspos,index);
       delete tmpStack;
       if (backStack!=NULL)
-      { LL_Stack *result=new LL_Stack_Sub(startIndex,myExp);
+      { BCCState_LLStack *result=new BCCState_LLStack_Sub(startIndex,myExp);
         result->mySub=backStack;
         result->myStep="snd";
         return result;
@@ -148,55 +148,111 @@ LL_Stack *LL_Stack::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lh
   } // }}}
   else if (re_sum!=NULL)
   { if (lhs.GetBit(lhsPos) == rhs.GetBit(lhsPos))
-    { LL_Trace *subTrace=NULL;
+    { LL_Stack *subStack=NULL;
       if (lhs.GetBit(lhsPos))
-      { 
+      { LLStack initStack(index,re_sum->GetRight());
+        subStack=initStack.UPD(...);
+        ...
+        LL_Trace *result = new LL_Trace_Sub(...);
+        return result;
+      }
     }
   }
-LL_Stack r1=re_seq->GetFront
+BCCState_LLStack r1=re_seq->GetFront
 } // }}}
-string LL_Stack::ToString() const // {{{
+string BCCState_LLStack::ToString() const // {{{
 { stringstream ss;
   ss << "(" << myEntryIndex << "," << myIndex << ")";
   return ss.str();
 } // }}}
-LL_Stack_Sub::LL_Stack_Sub(unsigned int index, const RE* exp) // {{{
-: LL_Stack(index,exp),
+BCCState_LLStack_Sub::BCCState_LLStack_Sub(unsigned int index, const RE* exp) // {{{
+: BCCState_LLStack(index,exp),
   mySub(NULL)
 {
 } // }}}
-LL_Stack_Sub::~LL_Stack_Sub() // {{{
+BCCState_LLStack_Sub::~BCCState_LLStack_Sub() // {{{
 { if (mySub!=NULL)
     delete mySub;
 } // }}}
-bool LL_Stack_Sub::LEQ() const // {{{
+bool BCCState_LLStack_Sub::LEQ() const // {{{
 { if (myStatus!=0)
     return myStatus<=0;
   return mySub->LEQ();
 } // }}}
-string LL_Stack_Sub::ToString() const // {{{
-{ return myStep + LL_Stack::ToString() + "->" + mySub->ToString();
+BCCState_LL *BCCState_LLStack_Sub::UPD(const BitCode &lhs, const BitCode &rhs, unsigned int &lhsPos, unsigned int &rhsPos, unsigned int &index) const // {{{
+{ 
+  const RE_One *exp_one = dynamic_cast<const RE_One*>(myExp);
+  const RE_Char *exp_chr = dynamic_cast<const RE_Char*>(myExp);
+  const RE_Seq *exp_seq = dynamic_cast<const RE_Seq*>(myExp);
+  const RE_Sum *exp_sum = dynamic_cast<const RE_Sum*>(myExp);
+  const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
+  if (exp_one!=NULL)
+    return NULL;
+  else if (exp_chr!=NULL)
+  { ++index;
+    return NULL;
+  }
+  else if (re_seq!=NULL) // {{{
+  { BCCState_LLStack *tmpStack = new BCCState_LLStack(index,&re_seq->GetFront());
+    int startIndex=index;
+    BCCState_LLStack *frontStack=tmpStack->Upd(lhs,rhs,lhsPos,rhsPos,index);
+    delete tmpStack;
+    if (frontStack!=NULL)
+    { BCCState_LLStack *result=new BCCState_LLStack_Sub(startIndex,myExp);
+      result->mySub=frontStack;
+      result->myStep="fst";
+      return result;
+    }
+    else
+    { tmpStack=new BCCState_LLStack(index,&re_seq->GetBack());
+      BCCState_LLStack *backStack=tmpStack->Upd(lhs,rhs,lhspos,rhspos,index);
+      delete tmpStack;
+      if (backStack!=NULL)
+      { BCCState_LLStack *result=new BCCState_LLStack_Sub(startIndex,myExp);
+        result->mySub=backStack;
+        result->myStep="snd";
+        return result;
+      }
+      else return NULL;
+    }
+  } // }}}
+  else if (re_sum!=NULL)
+  { if (lhs.GetBit(lhsPos) == rhs.GetBit(lhsPos))
+    { LL_Stack *subStack=NULL;
+      if (lhs.GetBit(lhsPos))
+      { LLStack initStack(index,re_sum->GetRight());
+        subStack=initStack.UPD(...);
+        ...
+        LL_Trace *result = new LL_Trace_Sub(...);
+        return result;
+      }
+    }
+  }
+BCCState_LLStack r1=re_seq->GetFront
 } // }}}
-LL_Stack_Split::LL_Stack_Split(unsigned int index, const RE* exp) // {{{
-: LL_Stack(index,exp),
+string BCCState_LLStack_Sub::ToString() const // {{{
+{ return myStep + BCCState_LLStack::ToString() + "->" + mySub->ToString();
+} // }}}
+BCCState_LLStack_Split::BCCState_LLStack_Split(unsigned int index, const RE* exp) // {{{
+: BCCState_LLStack(index,exp),
   myLeft(NULL),
   myRight(NULL)
 {
 } // }}}
-LL_Stack_Split::~LL_Stack_Split() // {{{
+BCCState_LLStack_Split::~BCCState_LLStack_Split() // {{{
 { if (myLeft!=NULL)
     delete myLeft;
   if (myRight!=NULL)
     delete myRight;
 } // }}}
-bool LL_Stack_Split::LEQ() const // {{{
+bool BCCState_LLStack_Split::LEQ() const // {{{
 { if (myStatus!=0)
     return myStatus<=0;
   const RE_Seq *exp_seq = dynamic_cast<const RE_Seq*>(myExp);
   const RE_Sum *exp_sum = dynamic_cast<const RE_Sum*>(myExp);
   const RE_Star *exp_star = dynamic_cast<const RE_Star*>(myExp);
-  const LL_Stack_Sub *leftSub = dynamic_cast<const LL_Stack_Sub*>(myLeft);
-  const LL_Stack_Sub *rightSub = dynamic_cast<const LL_Stack_Sub*>(myRight);
+  const BCCState_LLStack_Sub *leftSub = dynamic_cast<const BCCState_LLStack_Sub*>(myLeft);
+  const BCCState_LLStack_Sub *rightSub = dynamic_cast<const BCCState_LLStack_Sub*>(myRight);
   if (leftSub==NULL || rightSub==NULL)
     return true;
   if (exp_seq!=NULL) // sequence
@@ -236,7 +292,7 @@ bool LL_Stack_Split::LEQ() const // {{{
   // 0 or 1 or char...this should not be the case for split, but in any case all their callstacks should be equal
   return true;
 } // }}}
-string LL_Stack_Split::ToString() const // {{{
+string BCCState_LLStack_Split::ToString() const // {{{
 { return (string)"Split:\n  LHS: " + myLeft->ToString() + "\n  RHS: " + myRight->ToString();
 } // }}}
 
