@@ -162,7 +162,6 @@ vector<char> makeRange(int &pos, const std::string &s) // {{{
       case '\\':
         if (pos+1==s.size())
           throw "makeRange: ends with unescaped backslash";
-        cout << "Escaped: " << s[pos+1] << endl;
         switch (s[pos+1])
         { case 'n':
             result.push_back('\n');
