@@ -76,7 +76,8 @@ class NFA // {{{
     // throws a string error if the given string is not accepted
     BitCode Compress(const std::string &s) const;
     // Thompson simulation based parsing
-    // Not as efficient as DFASIM, but returns the least bitcode for the given ordering.
+    // Not as efficient as Compress (DFASIM), but returns the least bitcode
+    // for the given ordering.
     // This enables greedy-leftmost and longest-leftmost disambiguations
     BitCode Thompson(const std::string &s, BCCState *bcc_init, BCComparer leq, BCUpdater bcc_update) const;
     // Parse returns a RV representing the given string, and
@@ -85,7 +86,9 @@ class NFA // {{{
     // Find the epsilon-closure of a set of nodes in the NFA
     // The structure of the elementa are (dest,(output,source))
     void Closure(std::map<int,std::pair<std::string,int> > &nodes) const;
-    void Closure(thompson_state &nodes, BCCStates &bccstate, const BCComparer leq) const;
+    void Closure(thompson_state &nodes, BCCStates &bccstates, const BCComparer leq) const;
+    // Produces unclosed nest state by following all ch-edges from reached nodes
+    void Step(const thompson_state &src, thompson_state &dst, BCCStates &bccstates, BCComparer leq, const char &ch) const;
     // ToString prints the NFA in the dot format for easy debugging
     std::string ToString();
 

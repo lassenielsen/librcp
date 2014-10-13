@@ -14,6 +14,10 @@ class BCCState // {{{
     virtual std::string ToString() const;
   private:
 }; // }}}
+// Definition of GL order:
+// inl x < inr y
+// fold x < nil
+// + context rules
 class BCCState_GL : public BCCState // {{{
 { public:
     BCCState_GL();
@@ -22,16 +26,25 @@ class BCCState_GL : public BCCState // {{{
     BitCode lhsBuffer, rhsBuffer;
     std::string ToString() const;
 }; // }}}
-//class BCCState_LL: public BCCState // {{{
-//{ public:
-//    std::vector<std::pair<RE*,int> > commonStack;
-//    std::vector<std::pair<RE*,int> > lhsStack;
-//    std::vector<std::pair<RE*,int> > rhsStack;
-//    std::vector<int> lhsStartIndex;
-//    std::vector<int> rhsStartIndex;
-//    unsigned int lhsIndex;
-//    unsigned int rhsIndex;
-//}; // }}}
+// Definition of LL order:
+// inl x < inl y if x < y
+// inr x < inr y if x < y
+// iinl x < inr y
+// xy < zw if |str(x)| > |str(z)|
+// xy < zy if x < z and |str(x)| = |str(z)|
+// xy < xw if y < w
+// fold x < fold y if x < y
+// fold x < nil
+class BCCState_LL: public BCCState // {{{
+{ public:
+    std::vector<std::pair<RE*,int> > commonStack;
+    std::vector<std::pair<RE*,int> > lhsStack;
+    std::vector<std::pair<RE*,int> > rhsStack;
+    std::vector<int> lhsStartIndex;
+    std::vector<int> rhsStartIndex;
+    unsigned int lhsIndex;
+    unsigned int rhsIndex;
+}; // }}}
 
 /** BCComparer defines the function type of a resuming comparrison between
   * BitCodes.
@@ -60,8 +73,8 @@ BCCState *BCUPD_NN(const BitCode &lhs, const BitCode &rhs, const BCCState &state
 bool BCLEQ_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 // Longest Leftmost disambiguation
-//bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState &state);
-//BCCState *BCUPD_LL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
+bool BCLEQ_LL(const BitCode &lhs, const BitCode &rhs, BCCState &state);
+BCCState *BCUPD_LL(const BitCode &lhs, const BitCode &rhs, const BCCState &state);
 
 /** BCCStates holds the commparrison state for each pair of nodes */
 typedef std::map<int,std::map<int,BCCState*> > BCCStates;

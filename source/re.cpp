@@ -143,7 +143,9 @@ elttype ParseElt::GetType() const // {{{
 } // }}}
 
 vector<char> makeRange(int &pos, const std::string &s) // {{{
-{ vector<char> result;
+{ if (pos>=s.size())
+    throw "makeRange: range exceeds end of string";
+  vector<char> result;
   bool invert=false;
   if (s[pos]=='^')
   { invert=true;
@@ -160,8 +162,24 @@ vector<char> makeRange(int &pos, const std::string &s) // {{{
       case '\\':
         if (pos+1==s.size())
           throw "makeRange: ends with unescaped backslash";
-        else
-          result.push_back(s[pos+1]);
+        cout << "Escaped: " << s[pos+1] << endl;
+        switch (s[pos+1])
+        { case 'n':
+            result.push_back('\n');
+            break;
+          case 't':
+            result.push_back('\t');
+            break;
+          case 'r':
+            result.push_back('\r');
+            break;
+          case 'f':
+            result.push_back('\f');
+            break;
+          default:
+            result.push_back(s[pos+1]);
+            break;
+        }
         pos +=2;
         break;
       default:
@@ -261,8 +279,34 @@ void makeReg1(const string &def, list<ParseElt*> &dest) // Tokenize {{{
     { case '\\':
       { if (i+1==def.size())
           throw "makeReg1: def ends with unescaped backslash!";
-        ParseElt *elt = new ParseElt(new RE_Char(def[++i])); // Add escaped char to result
-        dest.push_back(elt);
+        ++i;
+        switch (def[i])
+        { case 'n':
+          { ParseElt *elt = new ParseElt(new RE_Char('\n')); // Add char token for newline to result
+            dest.push_back(elt);
+            break;
+          }
+          case 't':
+          { ParseElt *elt = new ParseElt(new RE_Char('\t')); // Add char token for tab to result
+            dest.push_back(elt);
+            break;
+          }
+          case 'r':
+          { ParseElt *elt = new ParseElt(new RE_Char('\r')); // Add char token for carage return to result
+            dest.push_back(elt);
+            break;
+          }
+          case 'f':
+          { ParseElt *elt = new ParseElt(new RE_Char('\f')); // Add char token for \f to result
+            dest.push_back(elt);
+            break;
+          }
+          default:
+          { ParseElt *elt = new ParseElt(new RE_Char(def[i])); // Add escaped char to result
+            dest.push_back(elt);
+            break;
+          }
+        }
         break;
       }
       case '[':
