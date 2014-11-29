@@ -42,7 +42,7 @@ class FRCA // Represents 0 {{{
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
     // Manage position marks // Returns all new markings produced by the given position
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &s, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &s, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &s, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
@@ -73,7 +73,7 @@ class FRCA_One : public FRCA // Represents 1 {{{
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
 }; // }}}
 class FRCA_Char : public FRCA // Represents a {{{
@@ -88,7 +88,7 @@ class FRCA_Char : public FRCA // Represents a {{{
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
 
   protected:
@@ -107,7 +107,7 @@ class FRCA_Seq : public FRCA // Represents R1xR2 {{{
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
@@ -129,7 +129,7 @@ class FRCA_Sum : public FRCA // Represents R1+R2 {{{
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();
@@ -150,7 +150,7 @@ class FRCA_Star : public FRCA // Represents R1* {{{
 
     virtual BitCode CompressGL(int &pos, bool productive=false) const;
     virtual void CompressLL(const std::string &s, int pos1, int pos2, BitCode &dest);
-    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive);
+    virtual std::vector<worklistitem> MarkSuffix(const std::string &string, int pos, bool productive, int &minPos);
     virtual std::vector<worklistitem> MarkPrefix(const std::string &string, int pos, bool productive);
     virtual void ClearSuffixes();
     virtual void ClearPrefixes();

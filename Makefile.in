@@ -21,7 +21,7 @@ COMMENT = OS_
 OS_AUTO = $(shell uname -s)
 
 compiler = g++
-args = -O3 -fPIC -I./include/ -Wno-deprecated
+args = -std=c++0x -O3 -fPIC -I./include/ -Wno-deprecated
 #OS_MAClibs = 
 #OS_LINUXlibs =
 
@@ -32,7 +32,6 @@ library_objects = \
   objects/frca.o \
   objects/bitcode_order.o \
   objects/bitcode.o \
-  objects/common.o \
 
 default:
 	@echo "Use make config, make build, sudo make install, make clean and if you don't like it sudo make uninstall."
