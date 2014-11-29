@@ -81,9 +81,7 @@ BitCode FRCA::CompressGL(const string &s) // {{{
 { ClearPrefixes();
   ClearSuffixes();
   int minPos=s.size();
-  cout << "minPos: " << minPos << endl;
   MarkSuffix(s,s.size(),true,minPos);
-  cout << "minPos: " << minPos << endl;
   if (minPos>0)
     throw string("Match error at position: ") + linecol(s,minPos-1);
   int pos=0;
