@@ -75,6 +75,8 @@ bool FRCA::Accept(const string &s) // {{{
   MarkSuffix(s,s.size(),true,minPos);
   if (minPos>0)
     throw string("Match error at position: ") + linecol(s,minPos-1);
+  if (!HasSuffix(0,false))
+    throw string("Match error at beginning");
   return HasSuffix(0,false);
 } // }}}
 BitCode FRCA::CompressGL(const string &s) // {{{
@@ -84,6 +86,8 @@ BitCode FRCA::CompressGL(const string &s) // {{{
   MarkSuffix(s,s.size(),true,minPos);
   if (minPos>0)
     throw string("Match error at position: ") + linecol(s,minPos-1);
+  if (!HasSuffix(0,false))
+    throw string("Match error at beginning");
   int pos=0;
   return CompressGL(pos,false);
 } // }}}
