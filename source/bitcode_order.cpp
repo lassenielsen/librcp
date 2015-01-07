@@ -95,93 +95,93 @@ BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given
   return result;
 } // }}}
 
-//class PS_RESULT // {{{
-//{ public:
-//    int length;
-//    int pos;
-//    bool cyclic;
-//}; // }}}
-//PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
-//{ const RE_One *re_one = dynamic_cast<const RE_One*>(exp);
-//  const RE_Char *re_char = dynamic_cast<const RE_Char*>(exp);
-//  const RE_Seq *re_seq = dynamic_cast<const RE_Seq*>(exp);
-//  const RE_Sum *re_sum = dynamic_cast<const RE_Sum*>(exp);
-//  const RE_Star *re_star = dynamic_cast<const RE_Star*>(exp);
-//  if (re_one!=NULL)
-//  { PS_RESULT result;
-//    result.pos=pos;
-//    result.length=0;
-//    result.cyclic=false;
-//    return result;
-//  }
-//  if (re_char!=NULL)
-//  { PS_RESULT result;
-//    result.pos=pos;
-//    result.length=1;
-//    result.cyclic=false;
-//    return result;
-//  }
-//  if (re_seq!=NULL)
-//  { PS_RESULT result1=PartSerialize(bc,&(re_seq->GetFront()),pos);
-//    int midpos=result1.pos;
-//    PS_RESULT result2=PartSerialize(bc,&(re_seq->GetBack()),midpos);
-//    PS_RESULT result;
-//    result.pos=result2.pos;
-//    result.length=result1.length+ result2.length;
-//    result.cyclic=result1.cyclic || result2.cyclic;
-//    return result;
-//  }
-//  if (re_sum!=NULL)
-//  { try
-//    { return bc.GetBit(pos)==BitCode::INL?
-//             PartSerialize(bc,&(re_sum->GetLeft()),pos+1):
-//             PartSerialize(bc,&(re_sum->GetRight()),pos+1);
-//    }
-//    catch (string s)
-//    { PS_RESULT result;
-//      result.pos=pos;
-//      result.length=0;
-//      result.cyclic=0;
-//      return result;
-//    }
-//  }
-//  if (re_star!=NULL)
-//  { try
-//    { if (bc.GetBit(pos)==BitCode::CONS)
-//      { PS_RESULT result1=PartSerialize(bc,&(re_star->GetSub()),pos+1);
-//        int midpos=result1.pos;
-//        PS_RESULT result2=PartSerialize(bc,re_star,midpos);
-//        PS_RESULT result;
-//        result.pos=result2.pos;
-//        result.length=result1.length+result2.length;
-//        result.cyclic=result1.cyclic || result2.cyclic || result1.length==0;
-//        return result;
-//      }
-//      else
-//      { PS_RESULT result;
-//        result.pos=pos+1;
-//        result.length=0;
-//        result.cyclic=false;
-//        return result;
-//      }
-//    }
-//    catch (string s)
-//    { PS_RESULT result;
-//      result.pos=pos;
-//      result.length=0;
-//      result.cyclic=0;
-//      return result;
-//    }
-//  }
-//} // }}}
-////class LEQ_RESULT // {{{
-////{ public:
-////    int result; // <0 => LESS, =0 => EQUAL >0 => GREATER
-////    int length1;
-////    int length2;
-////    int pos1;
-////    int pos2;
-////}; // }}}
+class PS_RESULT // {{{
+{ public:
+    int length;
+    int pos;
+    bool cyclic;
+}; // }}}
+PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
+{ const RE_One *re_one = dynamic_cast<const RE_One*>(exp);
+  const RE_Char *re_char = dynamic_cast<const RE_Char*>(exp);
+  const RE_Seq *re_seq = dynamic_cast<const RE_Seq*>(exp);
+  const RE_Sum *re_sum = dynamic_cast<const RE_Sum*>(exp);
+  const RE_Star *re_star = dynamic_cast<const RE_Star*>(exp);
+  if (re_one!=NULL)
+  { PS_RESULT result;
+    result.pos=pos;
+    result.length=0;
+    result.cyclic=false;
+    return result;
+  }
+  if (re_char!=NULL)
+  { PS_RESULT result;
+    result.pos=pos;
+    result.length=1;
+    result.cyclic=false;
+    return result;
+  }
+  if (re_seq!=NULL)
+  { PS_RESULT result1=PartSerialize(bc,&(re_seq->GetFront()),pos);
+    int midpos=result1.pos;
+    PS_RESULT result2=PartSerialize(bc,&(re_seq->GetBack()),midpos);
+    PS_RESULT result;
+    result.pos=result2.pos;
+    result.length=result1.length+ result2.length;
+    result.cyclic=result1.cyclic || result2.cyclic;
+    return result;
+  }
+  if (re_sum!=NULL)
+  { try
+    { return bc.GetBit(pos)==BitCode::INL?
+             PartSerialize(bc,&(re_sum->GetLeft()),pos+1):
+             PartSerialize(bc,&(re_sum->GetRight()),pos+1);
+    }
+    catch (string s)
+    { PS_RESULT result;
+      result.pos=pos;
+      result.length=0;
+      result.cyclic=0;
+      return result;
+    }
+  }
+  if (re_star!=NULL)
+  { try
+    { if (bc.GetBit(pos)==BitCode::CONS)
+      { PS_RESULT result1=PartSerialize(bc,&(re_star->GetSub()),pos+1);
+        int midpos=result1.pos;
+        PS_RESULT result2=PartSerialize(bc,re_star,midpos);
+        PS_RESULT result;
+        result.pos=result2.pos;
+        result.length=result1.length+result2.length;
+        result.cyclic=result1.cyclic || result2.cyclic || result1.length==0;
+        return result;
+      }
+      else
+      { PS_RESULT result;
+        result.pos=pos+1;
+        result.length=0;
+        result.cyclic=false;
+        return result;
+      }
+    }
+    catch (string s)
+    { PS_RESULT result;
+      result.pos=pos;
+      result.length=0;
+      result.cyclic=0;
+      return result;
+    }
+  }
+} // }}}
+class LEQ_RESULT // {{{
+{ public:
+    int result; // <0 => LESS, =0 => EQUAL >0 => GREATER
+    int length1;
+    int length2;
+    int pos1;
+    int pos2;
+}; // }}}
 ////LEQ_RESULT BCLEQ_LL1(const BitCode &bc1, int pos1, // {{{
 ////                     const BitCode &bc2, int pos2,
 ////                     vector<pair<RE*,int> > &stack)
@@ -342,4 +342,3 @@ BCCState *BCUPD_GL(const BitCode &lhs, const BitCode &rhs, const BCCState &given
 ////    }
 ////  }
 ////} // }}}
-

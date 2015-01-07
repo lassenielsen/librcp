@@ -257,6 +257,30 @@ void NFA::Closure(thompson_state &state, BCCStates &bccstates, BCComparer leq) c
   //PrintState(state);
   return;
 } // }}}
+void NFA::Step(const thompson_state &src, thompson_state &dst, BCCStates &bccstates, BCComparer leq, const char &ch) const // {{{
+{
+  for (thompson_state::const_iterator node=src.begin(); node!=src.end(); ++node)
+  { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
+    { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 && // ASSUME no multichar edges
+          GetNode(node->first).GetTransition(edge).GetInput()[0]==ch)
+      { // Create bitcode
+        BitCode code;
+        code.Append(GetNode(node->first).GetTransition(edge).GetOutput());
+        // Set state if better path is found
+        int dest_node=GetNode(node->first).GetTransition(edge).GetDest();
+        if (dst.find(dest_node)==dst.end() ||
+            leq(code,
+                dst.find(dest_node)->second.first,
+                *bccstates[node->first][dst[dest_node].second]))
+        { // If better path found: update state
+          dst[dest_node]=pair<BitCode,int>(code,node->first);
+        }
+      }
+    }
+  }
+  //PrintState(state);
+  return;
+} // }}}
 void UpdateBCCs(BCCStates &bcc_states, BCUpdater bcc_update, const NFA::thompson_state &deltas) // {{{
 {
   BCCStates result;
@@ -289,25 +313,7 @@ BitCode NFA::Thompson(const string &s, BCCState *bcc_init, BCComparer leq, BCUpd
   { // Update comparrison states
     UpdateBCCs(bccstates,bcc_update,states[pos]);
     // Find direct edges
-    for (thompson_state::const_iterator node=states[pos].begin(); node!=states[pos].end(); ++node)
-    { for (int edge=0; edge<GetNode(node->first).CountTransitions(); ++edge)
-      { if (GetNode(node->first).GetTransition(edge).GetInput().size()==1 && // ASSUME no multichar edges
-            GetNode(node->first).GetTransition(edge).GetInput()[0]==s[pos])
-        { // Create bitcode
-	  BitCode code;
-          code.Append(GetNode(node->first).GetTransition(edge).GetOutput());
-	  // Set state if better path is found
-          int dest_node=GetNode(node->first).GetTransition(edge).GetDest();
-	  if (states[pos+1].find(dest_node)==states[pos+1].end() ||
-	      leq(code,
-                  states[pos+1].find(dest_node)->second.first,
-                  *bccstates[node->first][states[pos+1][dest_node].second]))
-          { // If better path found: update state
-            states[pos+1][dest_node]=pair<BitCode,int>(code,node->first);
-          }
-        }
-      }
-    }
+    Step(states[pos],states[pos+1],bccstates,leq,s[pos]);
     // Perform epsilon-closure
     Closure(states[pos+1],bccstates,leq);
   }

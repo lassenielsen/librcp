@@ -1,5 +1,6 @@
 #include <rcp/dfa.hpp>
 #include <sstream>
+#include <string>
 #include <iostream>
 #include <typeinfo>
 #include <algorithm>
@@ -202,21 +203,23 @@ BitCode DFA::Compress(const string &s) // {{{
     if (path[pos+1]<0)
     { path[pos+1]=CreateNode(path[pos],s[pos]);
       if (path[pos+1]<0)
-        throw (string)"Error: No Match";
+      { pair<int,int> lc=index2pos(s,pos);
+        throw (string)"Error: No Match at line " + to_string(lc.first) + ", culumn " + to_string(lc.second);
+      }
     }
   }
   // Find NFA node by tracing the DFA path backwards from (the) final NFA node in the end state
   vector<int> nfa_node(s.size()+1);
   nfa_node[s.size()] = myNodes[path[s.size()]].Final();
   if (nfa_node[s.size()]<0)
-    throw (string)"Error: No Match";
+    throw (string)"Error: No Match - What happened?";
   for (int pos=s.size(); pos>0; --pos)
     myNodes[path[pos-1]].GetTransition(s[pos-1]).GetOutput(nfa_node[pos],nfa_node[pos-1]);
   BitCode result;
   // Sequence output from NFA path
   map<int,string>::const_iterator init=myInitCodes.find(nfa_node[0]);
   if (init==myInitCodes.end())
-    throw (string)"Error: No Match";
+    throw (string)"Error: No Match - What happend?";
   result.Append(init->second);
   int prev;
   for (int pos=0; pos<s.size(); ++pos)

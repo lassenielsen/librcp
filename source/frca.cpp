@@ -1,4 +1,5 @@
 #include <rcp/frca.hpp>
+#include <rcp/common.hpp>
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
@@ -70,13 +71,23 @@ FRCA::~FRCA() // {{{
 
 bool FRCA::Accept(const string &s) // {{{
 { ClearSuffixes();
-  MarkSuffix(s,s.size(),true);
+  int minPos=s.size();
+  MarkSuffix(s,s.size(),true,minPos);
+  if (minPos>0)
+    throw string("Match error at position: ") + linecol(s,minPos-1);
+  if (!HasSuffix(0,false))
+    throw string("Match error at beginning");
   return HasSuffix(0,false);
 } // }}}
 BitCode FRCA::CompressGL(const string &s) // {{{
 { ClearPrefixes();
   ClearSuffixes();
-  MarkSuffix(s,s.size(),true);
+  int minPos=s.size();
+  MarkSuffix(s,s.size(),true,minPos);
+  if (minPos>0)
+    throw string("Match error at position: ") + linecol(s,minPos-1);
+  if (!HasSuffix(0,false))
+    throw string("Match error at beginning");
   int pos=0;
   return CompressGL(pos,false);
 } // }}}
@@ -99,8 +110,10 @@ string FRCA::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,
                     mySuffixes,myProductiveSuffixes) + "0";
 } // }}}
-vector<worklistitem> FRCA::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 { vector<worklistitem> result;
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA::MarkPrefix(const string &s, int pos, bool productive) // {{{
@@ -210,7 +223,7 @@ void FRCA_One::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) //
 string FRCA_One::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes) + "1";
 } // }}}
-vector<worklistitem> FRCA_One::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA_One::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 { vector<worklistitem> result;
   if (not HasSuffix(pos,productive))
   { SetSuffix(pos, productive);
@@ -219,6 +232,8 @@ vector<worklistitem> FRCA_One::MarkSuffix(const string &s, int pos, bool product
     item.productive=productive;
     result.push_back(item);
   }
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA_One::MarkPrefix(const string &s, int pos, bool productive) // {{{
@@ -288,7 +303,7 @@ string FRCA_Char::ToString() const // {{{
   }
   return s;
 } // }}}
-vector<worklistitem> FRCA_Char::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA_Char::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 { vector<worklistitem> result;
   if (pos>0 && s[pos-1]==myChar)
   { if (not HasSuffix(pos-1,true))
@@ -299,6 +314,8 @@ vector<worklistitem> FRCA_Char::MarkSuffix(const string &s, int pos, bool produc
       result.push_back(item);
     }
   }
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA_Char::MarkPrefix(const string &s, int pos, bool productive) // {{{
@@ -375,7 +392,8 @@ int max_common(const set<int> &set1, const set<int> &set2)
 void FRCA_Seq::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
   myLeft->MarkPrefix(s,pos1,true);
-  myRight->MarkSuffix(s,pos2,true);
+  int minPos;
+  myRight->MarkSuffix(s,pos2,true,minPos);
   set<int> splitLeft=myLeft->GetPrefixes();
   set<int> splitRight=myRight->GetSuffixes();
   int split=max_common(splitLeft,splitRight);
@@ -387,11 +405,11 @@ void FRCA_Seq::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) //
 string FRCA_Seq::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes) + "(" + myLeft->ToString() + ")(" + myRight->ToString() + ")";
 } // }}}
-vector<worklistitem> FRCA_Seq::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA_Seq::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 { vector<worklistitem> result;
-  vector<worklistitem> result1 = myRight->MarkSuffix(s,pos,productive);
+  vector<worklistitem> result1 = myRight->MarkSuffix(s,pos,productive,minPos);
   for (vector<worklistitem>::const_iterator it1=result1.begin();it1!=result1.end();++it1)
-  { vector<worklistitem> result2=myLeft->MarkSuffix(s,it1->pos,it1->productive);
+  { vector<worklistitem> result2=myLeft->MarkSuffix(s,it1->pos,it1->productive,minPos);
     for (vector<worklistitem>::const_iterator it2=result2.begin();it2!=result2.end();++it2)
     { if (not HasSuffix(it2->pos,it2->productive))
       { SetSuffix(it2->pos, it2->productive);
@@ -399,6 +417,8 @@ vector<worklistitem> FRCA_Seq::MarkSuffix(const string &s, int pos, bool product
       }
     }
   }
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA_Seq::MarkPrefix(const string &s, int pos, bool productive) // {{{
@@ -474,8 +494,9 @@ BitCode FRCA_Sum::CompressGL(int &pos, bool productive) const // {{{
 } // }}}
 void FRCA_Sum::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) // {{{
 {
-  myLeft->MarkSuffix(s,pos2,true);
-  myRight->MarkSuffix(s,pos2,true);
+  int minPos;
+  myLeft->MarkSuffix(s,pos2,true,minPos);
+  myRight->MarkSuffix(s,pos2,true,minPos);
   if (myLeft->HasSuffix(pos1,false))
   { dest.PushBit(BitCode::INL);
     myLeft->CompressLL(s,pos1,pos2,dest);
@@ -493,10 +514,10 @@ string FRCA_Sum::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes)
        + "(" + myLeft->ToString() + ")+(" + myRight->ToString() + ")";
 } // }}}
-vector<worklistitem> FRCA_Sum::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA_Sum::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 { vector<worklistitem> result;
-  vector<worklistitem> result1=myLeft->MarkSuffix(s,pos,productive);
-  vector<worklistitem> result2=myRight->MarkSuffix(s,pos,productive);
+  vector<worklistitem> result1=myLeft->MarkSuffix(s,pos,productive,minPos);
+  vector<worklistitem> result2=myRight->MarkSuffix(s,pos,productive,minPos);
   for (vector<worklistitem>::const_iterator it=result1.begin();it!=result1.end();++it)
   { if (not HasSuffix(it->pos,it->productive))
     { SetSuffix(it->pos,it->productive);
@@ -509,6 +530,8 @@ vector<worklistitem> FRCA_Sum::MarkSuffix(const string &s, int pos, bool product
       result.push_back(*it);
     }
   }
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA_Sum::MarkPrefix(const string &s, int pos, bool productive) // {{{
@@ -591,7 +614,8 @@ void FRCA_Star::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) /
     return;
   }
   // Find split between a single iteration (from left) and any number of iterations (from right)
-  MarkSuffix(s,pos2,true);
+  int minPos=s.size();
+  MarkSuffix(s,pos2,true,minPos);
   ClearPrefixes();
   mySub->MarkPrefix(s,pos1,true);
   int split=max_common(mySub->GetPrefixes(),GetSuffixes());
@@ -608,7 +632,7 @@ void FRCA_Star::CompressLL(const string &s, int pos1, int pos2, BitCode &dest) /
 string FRCA_Star::ToString() const // {{{
 { return PrintMarks(myPrefixes,myProductivePrefixes,mySuffixes,myProductiveSuffixes) + "(" + mySub->ToString() + ")*";
 } // }}}
-vector<worklistitem> FRCA_Star::MarkSuffix(const string &s, int pos, bool productive) // {{{
+vector<worklistitem> FRCA_Star::MarkSuffix(const string &s, int pos, bool productive, int &minPos) // {{{
 {
   vector<worklistitem> result;
   vector<worklistitem> workset;
@@ -623,10 +647,12 @@ vector<worklistitem> FRCA_Star::MarkSuffix(const string &s, int pos, bool produc
     if (not HasSuffix(item.pos,item.productive))
     { SetSuffix(item.pos,item.productive);
       result.push_back(item);
-      vector<worklistitem> subResult=mySub->MarkSuffix(s,item.pos,false);
+      vector<worklistitem> subResult=mySub->MarkSuffix(s,item.pos,false,minPos);
       workset.insert(workset.end(),subResult.begin(),subResult.end());
     }
   }
+  if (minPos>pos)
+    minPos=pos;
   return result;
 } // }}}
 vector<worklistitem> FRCA_Star::MarkPrefix(const string &s, int pos, bool productive) // {{{
