@@ -271,7 +271,7 @@ void DFA::Compile(ostream &dest) const // {{{
          << "        {" << endl;
     set<char> edges=myNodes[i].GetEdges();
     for (set<char>::const_iterator edge=edges.begin(); edge!=edges.end(); ++edge)
-      dest << "          case '" << (*edge) << "': // {{{" << endl
+      dest << "          case " << int(*edge) << ": // {{{" << endl
            << "            path.push_back(pair<int,char>(state,ch));" << endl
            << "            state=" << myNodes[i].GetTransition(*edge).GetDest() << ";" << endl
            << "            break; // }}}" << endl;
