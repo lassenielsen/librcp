@@ -1,0 +1,9 @@
+extraction:
+  cpp:
+    after_prepare:
+    - "export GNU_MAKE=make"
+    - "export GIT=true"
+    configure:
+      command: "$GNU_MAKE config"
+    index:
+      build_command: "$GNU_MAKE build"
