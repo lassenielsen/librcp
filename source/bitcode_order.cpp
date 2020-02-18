@@ -173,6 +173,7 @@ PS_RESULT PartSerialize(const BitCode &bc, const RE *exp, int pos) // {{{
       return result;
     }
   }
+  throw string("PartSerialize: Unknown construct");
 } // }}}
 class LEQ_RESULT // {{{
 { public:
