@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <ostream>
 #include <rcp/bitcode.hpp>
 
 
@@ -111,6 +112,7 @@ class RE                    // Represents 0 {{{
       */
     virtual std::string ToString(int level=0) const; 
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     BitCode Compress(const std::string &s) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
@@ -125,6 +127,7 @@ class RE_One : public RE    // Represents 1 {{{
     virtual ~RE_One();
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_One* Copy() const;
@@ -137,6 +140,7 @@ class RE_Char : public RE   // Represents a {{{
     virtual ~RE_Char();
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Char* Copy() const;
@@ -151,6 +155,7 @@ class RE_Seq : public RE    // Represents R1xR2 {{{
     virtual ~RE_Seq();
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Seq* Copy() const;
@@ -167,6 +172,7 @@ class RE_Sum : public RE    // Represents R1+R2 {{{
     virtual ~RE_Sum();
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Sum* Copy() const;
@@ -183,6 +189,7 @@ class RE_Star : public RE   // Represents R1* {{{
     virtual ~RE_Star();
     virtual std::string ToString(int level=0) const;
     virtual RV* Decompress(const BitCode &bitvalue, int &pos) const;
+    virtual void Decode(const BitCode &bitvalue, int &pos, std::ostream &dest) const;
     virtual bool Accept(const std::string &s, int start=0, int end=-1) const;
     virtual BitCode Compress(const std::string &s, int start, int end, bool &accept) const;
     virtual RE_Star* Copy() const;

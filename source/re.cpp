@@ -579,6 +579,10 @@ RV *RE::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return NULL; // Error: No value
 } // }}}
+void RE::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{
+  throw string("RE::Decode called");
+} // }}}
 RE *RE::Copy() const // {{{
 { return new RE();
 } // }}}
@@ -611,6 +615,9 @@ string RE_One::ToString(int level) const // {{{
 RV *RE_One::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Unit();
+} // }}}
+void RE_One::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{ return;
 } // }}}
 bool RE_One::Accept(const std::string &s, int start, int end) const // {{{
 { if (end<0)
@@ -662,6 +669,10 @@ RV *RE_Char::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Char(myChar);
 } // }}}
+void RE_Char::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{ dest << myChar;
+  return;
+} // }}}
 bool RE_Char::Accept(const std::string &s, int start, int end) const // {{{
 { if (end<0)
     end=s.size();
@@ -704,6 +715,11 @@ string RE_Seq::ToString(int level) const // {{{
 RV *RE_Seq::Decompress(const BitCode &bitvalue, int &pos) const // {{{
 {
   return new RV_Pair(myLeft->Decompress(bitvalue,pos),myRight->Decompress(bitvalue,pos));
+} // }}}
+void RE_Seq::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{ myLeft->Decode(bitvalue,pos,dest);
+  myRight->Decode(bitvalue,pos,dest);
+  return;
 } // }}}
 bool RE_Seq::Accept(const std::string &s, int start, int end) const // {{{
 { if (end<0)
@@ -769,6 +785,14 @@ RV *RE_Sum::Decompress(const BitCode &bitvalue, int &pos) const // {{{
   else
     return new RV_Inr(myRight->Decompress(bitvalue,pos));
 } // }}}
+void RE_Sum::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{ if (pos>=bitvalue.GetLength())
+    throw string("RE_Sum::Decode called without sufficient bits");
+  if (bitvalue.GetBit(pos++)==BitCode::INL)
+    return myLeft->Decode(bitvalue,pos,dest);
+  else
+    return myRight->Decode(bitvalue,pos,dest);
+} // }}}
 bool RE_Sum::Accept(const std::string &s, int start, int end) const // {{{
 { if (end<0)
     end=s.size();
@@ -821,13 +845,32 @@ string RE_Star::ToString(int level) const // {{{
     return mySub->ToString(3) + "*";
 } // }}}
 RV *RE_Star::Decompress(const BitCode &bitvalue, int &pos) const // {{{
-{
-  if (pos>=bitvalue.GetLength())
-    return NULL;
-  if (bitvalue.GetBit(pos++)==BitCode::NIL)
-    return new RV_Fold(new RV_Inl(new RV_Unit));
-  else
-    return new RV_Fold(new RV_Inr(new RV_Pair(mySub->Decompress(bitvalue,pos),Decompress(bitvalue,pos))));
+{ vector<RV*> vals;
+  for (;;)
+  { if (pos>=bitvalue.GetLength())
+    { for (auto val=vals.begin(); val!=vals.end(); ++val)
+        delete *val;
+      return NULL;
+    }
+    if (bitvalue.GetBit(pos++)==BitCode::NIL)
+      break;
+    else
+      vals.push_back(mySub->Decompress(bitvalue,pos));
+  }
+  // Collect result
+  RV *result=new RV_Fold(new RV_Inl(new RV_Unit));
+  for (auto val=vals.rbegin(); val!=vals.rend(); ++val)
+    result=new RV_Fold(new RV_Inr(new RV_Pair(*val,result)));
+  return result;
+} // }}}
+void RE_Star::Decode(const BitCode &bitvalue, int &pos, ostream &dest) const // {{{
+{ for (;;)
+  { if (pos>=bitvalue.GetLength())
+      throw string("RE_Star::Decode called without sufficient bits");
+    if (bitvalue.GetBit(pos++)==BitCode::NIL)
+      return;
+    mySub->Decode(bitvalue,pos,dest);
+  }
 } // }}}
 bool RE_Star::Accept(const std::string &s, int start, int end) const // {{{
 { if (end<0)
@@ -936,7 +979,7 @@ BitCode RV_Inl::BitRep() const // {{{
   BitCode result;
   result.PushBit(BitCode::INL);
   result.Append(myVal->BitRep());
-  return BitCode();
+  return result;
 } // }}}
 const RV* RV_Inl::GetLeft() const // {{{
 { return myVal;
@@ -963,7 +1006,7 @@ BitCode RV_Inr::BitRep() const // {{{
   BitCode result;
   result.PushBit(BitCode::INR);
   result.Append(myVal->BitRep());
-  return BitCode();
+  return result;
 } // }}}
 const RV* RV_Inr::GetRight() const // {{{
 { return myVal;
